@@ -15,6 +15,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.StrictMode;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -29,28 +31,30 @@ import org.json.JSONObject;
 import java.io.IOException;
 import okhttp3.*;
 
-//17:30 OK
+//
 public class MainActivity extends AppCompatActivity implements View.OnFocusChangeListener {
     boolean select = false;
     boolean flag = true;
     int upmin = 6, uphour = 10, downmin = 6, downhour = 10;
     int selectB = -1, selectL = -1, selectA = -1, selectC = -1;
-    List<String> emus = new List<String>();
+    List<String> emus = new List<>();
     Dictionary<String, String> dic = new Dictionary<>();
     Dictionary<String, String> dic2 = new Dictionary<>();
     List<String> dk1 = new List<>();
     List<String> dk2 = new List<>();
+    List<List<List<Integer>>> sss = new List<>();//small stations
+    List<Integer> ssns = new List<>();//small station names
     String train = "";
+    String ver = "";
     List<ListItem> lis = new List<>();
     String upTime = "", downTime = "";
     String[] rcps = new String[0];
     private static double EARTH_RADIUS = 6378137;
 
     private static double rad(double d) {
-        double e = d * Math.PI / 180.0;
-        return e;
+        return d * Math.PI / 180.0;
     }
-    public static double GetLength(double lng1,double lat1,double lng2, double lat2) {
+    public static double GetLength(double lng1,double lat1,double lng2, double lat2) {//获取长度
         double radLat1 = rad(lat1);
         double radLat2 = rad(lat2);
         double a = radLat1 - radLat2;
@@ -60,11 +64,11 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         s = Math.round(s * 10000) / 10000;
         return s / 1000.0;
     }
-    public String Gethtml(String url) throws IOException {
+    public String Gethtml(String url) throws IOException {//爬虫
         return new OkHttpClient().newCall(new Request.Builder().url(url).get().build()).execute().body().string();
     }
-    SeatType GetSeatType(String str) {
-        switch (str) {
+    SeatType GetSeatType(String str) {//String转SeatType
+        switch (str.toUpperCase()) {
             case "ZE":
                 return SeatType.ZE;
             case "CA":
@@ -75,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 return SeatType.ZY;
             case "ZT":
                 return SeatType.ZT;
+            case "ZS":
             case "SW":
                 return SeatType.SW;
             case "WG":
@@ -87,10 +92,20 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 return SeatType.WE;
             case "WRC":
                 return SeatType.WRC;
+            case "DGN":
+                return SeatType.DGN;
+            case "UY":
+                return SeatType.UY;
+            case "D":
+                return SeatType.D;
+            case "ZYC":
+                return SeatType.ZYC;
+            case "BZ":
+                return SeatType.BZ;
         }
         return SeatType.ZE;
     }
-    public String replace(String sourceString, char chElemData) {
+    public String replace(String sourceString, char chElemData) {//删除字符
         String tmpString = "";
         tmpString += chElemData;
         StringBuffer stringBuffer = new StringBuffer(sourceString);
@@ -116,47 +131,51 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             //ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.MANAGE_DOCUMENTS}, 4);
             //ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND}, 4);
         }
-        ((EditText)(findViewById(R.id.et_trainNumber))).setOnFocusChangeListener(new android.view.View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if(!hasFocus) {
-                    ((EditText)(findViewById(R.id.et_trainNumber))).setText(((EditText)(findViewById(R.id.et_trainNumber))).getText().toString().toUpperCase());
-                    String tmp = ((EditText)(findViewById(R.id.et_trainNumber))).getText().toString();
-                    boolean b = true;
-                    b = b && tmp.contains(" ");
-                    b = b && (tmp.startsWith("G")||tmp.startsWith("D")||tmp.startsWith("C")||tmp.startsWith("S"));
-                    b = b && (tmp.length()<22);
-                    if(tmp.contains(" ")) {
-                        b = b && (tmp.split(" ")[0].charAt(0) == tmp.split(" ")[1].charAt(0));
-                        if(tmp.contains("/")) {
-                            b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1).split("/")[0]) < 9999);
-                            b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1).split("/")[0]) > 0);
-                            b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1).split("/")[0]) < 9999);
-                            b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1).split("/")[0]) > 0);
-                            b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1).split("/")[1]) < 9999);
-                            b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1).split("/")[1]) > 0);
-                            b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1).split("/")[1]) < 9999);
-                            b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1).split("/")[1]) > 0);
-                        }
-                        else {
-                            b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1)) < 9999);
-                            b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1)) > 0);
-                            b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1)) < 9999);
-                            b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1)) > 0);
-                        }
+        ((EditText)(findViewById(R.id.et_trainNumber))).setOnFocusChangeListener((v, hasFocus) -> {
+            if(!hasFocus) {
+                ((EditText)(findViewById(R.id.et_trainNumber))).setText(((EditText)(findViewById(R.id.et_trainNumber))).getText().toString().toUpperCase());
+                String tmp = ((EditText)(findViewById(R.id.et_trainNumber))).getText().toString();
+                boolean b = true;
+                b = b && tmp.contains(" ");
+                b = b && (tmp.startsWith("G")||tmp.startsWith("D")||tmp.startsWith("C")||tmp.startsWith("S"));
+                b = b && (tmp.length()<22);
+                int min = 0;
+                if (tmp.startsWith("D"))
+                    min = 300;
+                else if (tmp.startsWith("C"))
+                    min = 1000;
+                else if (tmp.startsWith("S"))
+                    min = 100;
+                if(tmp.contains(" ")) {
+                    b = b && (tmp.split(" ")[0].charAt(0) == tmp.split(" ")[1].charAt(0));
+                    if(tmp.contains("/")) {
+                        b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1).split("/")[0]) < 9999);
+                        b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1).split("/")[0]) > min);
+                        b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1).split("/")[0]) < 9999);
+                        b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1).split("/")[0]) > min);
+                        b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1).split("/")[1]) < 9999);
+                        b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1).split("/")[1]) > min);
+                        b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1).split("/")[1]) < 9999);
+                        b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1).split("/")[1]) > min);
                     }
-                    b = b && (tmp.indexOf(" ") == tmp.lastIndexOf(" "));
-                    b = b && (tmp.replace("G","").replace("D","")
-                            .replace("C","").replace("S","")
-                            .replace("9","").replace("0","")
-                            .replace("8","").replace("1","")
-                            .replace("7","").replace("2","")
-                            .replace("6","").replace("3","")
-                            .replace("5","").replace("4","")
-                            .replace("/","").replace(" ","").length() == 0);
-                    if(b == false)
-                        ((EditText)(findViewById(R.id.et_trainNumber))).setText("C1".toCharArray(),0,2);
+                    else {
+                        b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1)) < 9999);
+                        b = b && (Integer.valueOf(tmp.split(" ")[0].substring(1)) > min);
+                        b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1)) < 9999);
+                        b = b && (Integer.valueOf(tmp.split(" ")[1].substring(1)) > min);
+                    }
                 }
+                b = b && (tmp.indexOf(" ") == tmp.lastIndexOf(" "));
+                b = b && (tmp.replace("G","").replace("D","")
+                        .replace("C","").replace("S","")
+                        .replace("9","").replace("0","")
+                        .replace("8","").replace("1","")
+                        .replace("7","").replace("2","")
+                        .replace("6","").replace("3","")
+                        .replace("5","").replace("4","")
+                        .replace("/","").replace(" ","").length() == 0);
+                if(b == false)
+                    ((EditText)(findViewById(R.id.et_trainNumber))).setText("D301 D302".toCharArray(),0,2);
             }
         });
             if(!flag)
@@ -169,7 +188,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             List<SeatType> seatTypes = new List<SeatType>();
             List<List<Train>> trains = new List<List<Train>>();
             List<String> ver = new List<String>();
-            String[] emustrs, trainstrs, seatstrs;
+            String[] emustrs, trainstrs, seatstrs, temp, temp2, tmp3, evens = null, ssstrs = null;
+            int tmp4;
             emustrs = new String[1];
             JSONObject railstr, tmp;
             Station station;
@@ -181,20 +201,26 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             try {
                 html = Gethtml("https://raildatas.github.io/emudata.html");
                 DataFiles.emuDatas = replace(html, '\r').split("\n");
-                File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                        +"emudata.dta",html);
+                //File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
+                        //+"emudata.dta",html);
                 html = Gethtml("https://raildatas.github.io/railwaydata.html");
                 DataFiles.railDatas = replace(html, '\r').split("\n");
-                File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                        +"railwaydata.dta",html);
+                //File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
+                        //+"railwaydata.dta",html);
                 html = Gethtml("https://raildatas.github.io/replace.html");
                 replaceDatas = replace(html, '\r').split("\n");
-                File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                        +"replace.dta",html);
+                //File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
+                        //+"replace.dta",html);
                 html = Gethtml("https://raildatas.github.io/rcp.html");
                 rcps = replace(html, '\r').split("\n");
-                File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                        +"rcp.dta",html);
+                //File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
+                        //+"rcp.dta",html);
+                html = Gethtml("https://raildatas.github.io/smallstations.html");
+                ssstrs = replace(html, '\r').split("\n");
+                //File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
+                        //+"sss.dta",html);
+                html = Gethtml("https://raildatas.github.io/evnets.html");
+                evens = replace(html, '\r').split("\n");
             }
             catch (Exception e) {
                 System.exit(1);
@@ -221,9 +247,19 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     selectC = 0;
                     ((Button)findViewById(R.id.sp_rcp)).setText(rcps[0]);
                 }
+                for (int i = 0; i < evens.length; i++) {
+                    tmp3 = evens[i].split(" ");
+                    //es.add();
+                    tmp4 = new Even(Integer.parseInt(tmp3[0]),Integer.parseInt(tmp3[1]),Integer.parseInt(tmp3[2]), tmp3[3]).IsNow();
+                    if(tmp4 != -1)
+                        ((TextView)findViewById(R.id.tv_even)).setText((((TextView)findViewById(R.id.tv_even)).getText().toString().equals("")?"今天是":"\n今天是") + tmp3[3] + Integer.toString(tmp4) + "周年");
+                }
                 for (int i = 0; i < DataFiles.emuDatas.length; i++) {
                     emustrs = DataFiles.emuDatas[i].split("\\*");
-                    trains.clear();
+                    if (i == 54)
+                        i = 54;
+                    trains = new List<>();
+                    ver = new List<>();
                     for (int j = 4, x = 0; j < emustrs.length; j += 2, x++) {
                         trainstrs = emustrs[j].split(" ");
                         trains.Add(new List<Train>());
@@ -244,7 +280,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 }
                 if(Share.emus.size()>0) {
                     train = Share.emus.get(0).name;
-                    ((Button)(findViewById(R.id.sp_emu))).setText(train);
+                    this.ver = Share.emus.get(0).versions.get(0);
+                    ((Button)(findViewById(R.id.sp_emu))).setText(train + "(" + this.ver + ")");
                     if(Share.emus.get(0).trains.get(0).size() > 9)
                         ((Switch)(findViewById(R.id.sw_double))).setEnabled(false);
                     else
@@ -300,6 +337,28 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                         }
                     }
                 }
+                for(int i = 0;i < ssstrs.length;i++) {
+                    temp = ssstrs[i].split(" ");
+                    for(int j = 0;j < Share.stations.size();j++) {
+                        if(Share.stations.get(j).name.equals(temp[0])) {
+                            ssns.add(Integer.valueOf(j));
+                            break;
+                        }
+                    }
+                    sss.add(new List<>());
+                    for (int j = 1;j < temp.length;j++) {
+                        temp2 = temp[j].split("&");
+                        sss.get(i).add(new List<>());
+                        for (int k = 0;k < temp2.length;k++) {
+                            for (int l = 0;l < Share.rails.size();l++) {
+                                if(Share.rails.get(l).name.equals(temp2[k])) {
+                                    sss.get(i).get(j - 1).add(Integer.valueOf(l));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
                 for(String item2:replaceDatas) {
                     if(item2.startsWith("*")) {
                         dic2.Add(item2.substring(1).split(" ")[0], item2.split(" ")[1]);
@@ -312,32 +371,43 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 }
             }
             catch (Exception e) {
-                Log.i("tag",e.toString());
+                //System.exit(1);
             }
             flag = false;
         ((EditText)(findViewById(R.id.et_before))).setOnFocusChangeListener(this);
+        ((EditText)findViewById(R.id.sw_no_after)).addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {    }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {    }
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (selectA < 0)
+                    return;
+                if (((EditText)findViewById(R.id.sw_no_after)).getText().toString().equals(""))
+                    return;
+                if ((Integer.valueOf(((EditText)findViewById(R.id.sw_no_after)).getText().toString()) > 0) &&
+                    Share.stations.get(selectA).name.endsWith("线路所"))
+                    ((EditText)findViewById(R.id.sw_no_after)).setText("0");
+            }
+        });
     }
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
-        if(!hasFocus)
-        {
-            if(((EditText)(findViewById(R.id.et_before))).length() > 0)
-            {
+        if(!hasFocus) {
+            if(((EditText)(findViewById(R.id.et_before))).length() > 0) {
                 boolean b = false;
                 int i = 0;
-                for (Station item : Share.stations)
-                {
+                for (Station item : Share.stations) {
                     if (item.name
                             .equals(((EditText)(findViewById(R.id.et_before))).getText().toString())
                             && (!(item.name.toLowerCase().startsWith("x")))) {
                         b = true;
                         break;
                     }
-                    //Log.i("tag", item.name+"+"+((EditText) (findViewById(R.id.et_before))).getText().toString());
                     i++;
                 }
-                if(selectB != i)
-                {
+                if(selectB != i) {
                     selectL = -1;
                     selectA = -1;
                     ((Button)(findViewById(R.id.sp_lineName))).setText("");
@@ -345,10 +415,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     ((Button)(findViewById(R.id.btn_add))).setEnabled(false);
                 }
                 selectB = i;
-                //if(b)
-                // ((Button)(findViewById(R.id.sp_lineName))).setEnabled(true);
-                if(!b)
-                {
+                if(!b) {
                     ((EditText)(findViewById(R.id.et_before))).setText("");
                     new AlertDialog.Builder(MainActivity.this).setTitle("未找到起点站").create().show();
                 }
@@ -369,40 +436,42 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     ContextCompat.getColor(this,R.color.CRH)));
             ((Button)(findViewById(R.id.btn_up))).setBackgroundTintList(ColorStateList.valueOf(
                     ContextCompat.getColor(this,R.color.E_Train)));
-            if (lis.size() > 0) {
-                selectB = lis.get(lis.size() - 1).after;
-                ((EditText)(findViewById(R.id.et_before))).setEnabled(false);
-                ((EditText)(findViewById(R.id.et_before))).setText(Share.stations.get(selectB).name);
-            }
-            else {
-                selectB = -1;
-                ((EditText)(findViewById(R.id.et_before))).setEnabled(true);
-                ((Button)(findViewById(R.id.btn_save))).setEnabled(false);
-                ((Button)(findViewById(R.id.btn_out))).setEnabled(false);
-                ((EditText)(findViewById(R.id.et_before))).setText("");
-            }
         }
         else {
             select = true;
-            ((Button)(findViewById(R.id.btn_up))).setBackgroundTintList(ColorStateList.valueOf(
-                    ContextCompat.getColor(this,R.color.CRH)));
-            ((Button)(findViewById(R.id.btn_down))).setBackgroundTintList(ColorStateList.valueOf(
-                    ContextCompat.getColor(this,R.color.E_Train)));
-            if (lis.size() > 0) {
-                selectB = lis.get(0).before;
-                ((EditText)(findViewById(R.id.et_before))).setEnabled(false);
-                ((EditText)(findViewById(R.id.et_before))).setText(Share.stations.get(selectB).name);
-            }
-            else {
-                selectB = -1;
-                ((EditText)(findViewById(R.id.et_before))).setEnabled(true);
-                ((Button)(findViewById(R.id.btn_save))).setEnabled(false);
-                ((Button)(findViewById(R.id.btn_out))).setEnabled(false);
-                ((EditText)(findViewById(R.id.et_before))).setText("");
-            }
+            ((Button) (findViewById(R.id.btn_up))).setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(this, R.color.CRH)));
+            ((Button) (findViewById(R.id.btn_down))).setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(this, R.color.E_Train)));
         }
-        selectL = -1;
-        selectA = -1;
+        if (lis.size() < 1) {
+            selectB = -1;
+            ((EditText)(findViewById(R.id.et_before))).setEnabled(true);
+            ((Button)(findViewById(R.id.btn_save))).setEnabled(false);
+            ((Button)(findViewById(R.id.btn_out))).setEnabled(false);
+            ((EditText)(findViewById(R.id.et_before))).setText("");
+        }
+        else if (!select) {
+            selectB = Integer.valueOf(Integer.toString(lis.get(lis.size() - 1).after));
+            ((EditText)(findViewById(R.id.sw_no_before))).setText(Integer.toString(lis.get(lis.size() - 1).afterstop));
+        }
+        else {
+            selectB = Integer.valueOf(Integer.toString(lis.get(0).before));
+            ((EditText)(findViewById(R.id.sw_no_before))).setText(Integer.toString(lis.get(0).beforestop));
+        }
+        if(lis.size() > 0) {
+            ((EditText) (findViewById(R.id.et_before))).setText(Share.stations.get(selectB).name);
+            ((Switch) findViewById(R.id.sw_before_tst)).setChecked(select ? lis.get(0).beforeteg : lis.get(lis.size() - 1).beforeteg);
+        }
+        selectL = selectA = -1;
+        ((Button)(findViewById(R.id.sp_lineName))).setText("");
+        ((Button)(findViewById(R.id.sp_after))).setText("");
+        ((Button)(findViewById(R.id.btn_add))).setEnabled(false);
+        ((Button)(findViewById(R.id.sp_after))).setEnabled(false);
+        ((EditText)(findViewById(R.id.sw_no_after))).setText("2");
+        ((EditText)(findViewById(R.id.et_early_time))).setText("5");
+        ((Switch)findViewById(R.id.sw_after_tst)).setChecked(false);
+        ((RadioButton)findViewById(R.id.rb_slow)).setChecked(true);
         ((Button)(findViewById(R.id.sp_lineName))).setText("");
         ((Button)(findViewById(R.id.sp_after))).setText("");
     }
@@ -419,24 +488,28 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 ((Button)(findViewById(R.id.btn_save))).setEnabled(false);
                 ((Button)(findViewById(R.id.btn_out))).setEnabled(false);
                 ((EditText)(findViewById(R.id.et_before))).setText("");
-                ((EditText)(findViewById(R.id.sw_no_before))).setText("");
+                ((EditText)(findViewById(R.id.sw_no_before))).setText("2");
+                ((EditText)(findViewById(R.id.sw_no_before))).setEnabled(true);
             }
-            else {
+            else if (!select) {
                 selectB = Integer.valueOf(Integer.toString(lis.get(lis.size() - 1).after));
-                ((EditText)(findViewById(R.id.et_before))).setEnabled(false);
-                ((EditText)(findViewById(R.id.et_before))).setText(Share.stations.get(selectB).name);
                 ((EditText)(findViewById(R.id.sw_no_before))).setText(Integer.toString(lis.get(lis.size() - 1).afterstop));
             }
-            selectL = -1;
-            selectA = -1;
+            else {
+                selectB = Integer.valueOf(Integer.toString(lis.get(0).before));
+                ((EditText)(findViewById(R.id.sw_no_before))).setText(Integer.toString(lis.get(0).beforestop));
+            }
+            if(lis.size() > 0) {
+                ((EditText) (findViewById(R.id.et_before))).setText(Share.stations.get(selectB).name);
+                ((Switch)findViewById(R.id.sw_before_tst)).setChecked(select?lis.get(0).beforeteg:lis.get(lis.size() - 1).beforeteg);
+            }
+            selectL = selectA = -1;
             ((Button)(findViewById(R.id.sp_lineName))).setText("");
             ((Button)(findViewById(R.id.sp_after))).setText("");
             ((Button)(findViewById(R.id.btn_add))).setEnabled(false);
             ((Button)(findViewById(R.id.sp_after))).setEnabled(false);
-            ((EditText)(findViewById(R.id.sw_no_before))).setEnabled(false);
             ((EditText)(findViewById(R.id.sw_no_after))).setText("2");
-            ((Switch)findViewById(R.id.sw_before_tst)).setChecked(((Switch)findViewById(R.id.sw_after_tst)).isChecked());
-            ((Switch)findViewById(R.id.sw_before_tst)).setEnabled(false);
+            ((EditText)(findViewById(R.id.et_early_time))).setText("5");
             ((Switch)findViewById(R.id.sw_after_tst)).setChecked(false);
             ((RadioButton)findViewById(R.id.rb_slow)).setChecked(true);
             SetTime();
@@ -467,17 +540,15 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         }, uphour, upmin, true).show();
     }
     public void SetDownStart(View view) {
-        new TimePickerDialog(this, android.R.style.Theme_Holo_Light_Dialog, new TimePickerDialog.OnTimeSetListener() {
-            @Override
-            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                downmin = minute;
-                downhour = hourOfDay;
-                String tmp1 = minute<10?"0"+Integer.toString(minute):Integer.toString(minute);
-                String tmp2 = hourOfDay<10?"0"+Integer.toString(hourOfDay):Integer.toString(hourOfDay);
-                ((TextView)(findViewById(R.id.tv_downstart))).setText(tmp2+":"+tmp1);
-                SetTime();
-            }
-        }, downhour, downmin, true).show();
+        new TimePickerDialog(this, android.R.style.Theme_Holo_Light_Dialog, (view1, hourOfDay, minute) -> {
+            downmin = minute;
+            downhour = hourOfDay;
+            String tmp1 = minute<10?"0"+Integer.toString(minute):Integer.toString(minute);
+            String tmp2 = hourOfDay<10?"0"+Integer.toString(hourOfDay):Integer.toString(hourOfDay);
+            ((TextView)(findViewById(R.id.tv_downstart))).setText(tmp2+":"+tmp1);
+            SetTime();
+        },
+                downhour, downmin, true).show();
     }
     public String[] ToArray(List<String> str){
         final String[] tmp = new String[str.size()];
@@ -499,12 +570,40 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         train = tmp[which];
-                        ((Button)(findViewById(R.id.sp_emu))).setText(train);
-                        if(Share.emus.get(which).trains.get(0).size() > 9)
-                            ((Switch)(findViewById(R.id.sw_double))).setEnabled(false);
-                        else
-                            ((Switch)(findViewById(R.id.sw_double))).setEnabled(true);
+                        String[] tmp4 = ToArray(Share.emus.get(which).versions);
+                        if (tmp4.length <= 1) {
+                            ver = tmp4[0];
+                            ((Button)(findViewById(R.id.sp_emu))).setText(train + "(" + ver + ")");
+                            if(Share.emus.get(which).trains.get(0).size() > 9) {
+                                ((Switch) (findViewById(R.id.sw_double))).setEnabled(false);
+                                ((Switch) (findViewById(R.id.sw_double))).setChecked(false);
+                            }
+                            else
+                                ((Switch)(findViewById(R.id.sw_double))).setEnabled(true);
+                            SetTime();
+                            dialog.cancel();
+                            return;
+                        }
+                        int tmp3 = 0;
+                        int tmp5 = which;
                         dialog.cancel();
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("请选择车型")
+                                .setSingleChoiceItems(tmp4, tmp3, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        ver = tmp4[which];
+                                        ((Button)(findViewById(R.id.sp_emu))).setText(train + "(" + ver + ")");
+                                        if(Share.emus.get(tmp5).trains.get(which).size() > 9) {
+                                            ((Switch) (findViewById(R.id.sw_double))).setEnabled(false);
+                                            ((Switch) (findViewById(R.id.sw_double))).setChecked(false);
+                                        }
+                                        else
+                                            ((Switch)(findViewById(R.id.sw_double))).setEnabled(true);
+                                        SetTime();
+                                        dialog.cancel();
+                                    }
+                                }).create().show();
                     }
                 }).create().show();
     }
@@ -512,13 +611,39 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         onFocusChange(view, false);
         List<String> strs = new List<>();
         boolean b = false;
-        for (Station item : Share.stations) {
-            if (item.name
-                    .equals(((EditText) (findViewById(R.id.et_before))).getText().toString())
-                    && (!(item.name.toLowerCase().startsWith("x"))) && ((!(item.name.toLowerCase().endsWith("线路所"))) || (!((EditText)findViewById(R.id.et_before)).isEnabled()))) {
-                b = true;
-                for (int items : item.rails) {
-                    strs.add(Share.rails.get(items).name);
+        boolean bIsSmall = false;
+        if (lis.size() != 0) {
+            for(int i = 0;i < ssns.size();i++) {
+                if (ssns.get(i) == lis.get(lis.size() - 1).after) {
+                    bIsSmall = true;
+                    boolean zc = false;
+                    for(int j = 0;j < sss.get(i).size();j++) {
+                        for(int k = 0;k < sss.get(i).get(j).size();k++) {
+                            if((zc == false) && (sss.get(i).get(j).get(k) == lis.get(lis.size() - 1).line)) {
+                                zc = true;
+                                b = true;
+                                k = 0;
+                                strs.add(Share.rails.get(lis.get(lis.size() - 1).line).name);
+                            }
+                            if(zc && (sss.get(i).get(j).get(k) != lis.get(lis.size() - 1).line))
+                                strs.add(Share.rails.get(sss.get(i).get(j).get(k)).name);
+                        }
+                        if (zc == true)
+                            zc = false;
+                    }
+                    break;
+                }
+            }
+        }
+        if (bIsSmall == false) {
+            for (Station item : Share.stations) {
+                if (item.name
+                        .equals(((EditText) (findViewById(R.id.et_before))).getText().toString())
+                        && (!(item.name.toLowerCase().startsWith("x"))) && ((!(item.name.toLowerCase().endsWith("线路所"))) || (!((EditText) findViewById(R.id.et_before)).isEnabled()))) {
+                    b = true;
+                    for (int items : item.rails) {
+                        strs.add(Share.rails.get(items).name);
+                    }
                 }
             }
         }
@@ -654,9 +779,10 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         ((Button)(findViewById(R.id.btn_add))).setEnabled(false);
         ((Button)(findViewById(R.id.sp_after))).setEnabled(false);
         ((EditText)(findViewById(R.id.et_before))).setEnabled(false);
-        ((EditText)(findViewById(R.id.sw_no_before))).setText(Integer.toString(lis.get(lis.size()-1).afterstop));
+        ((EditText)(findViewById(R.id.sw_no_before))).setText(Integer.toString(select?lis.get(0).beforestop:lis.get(lis.size()-1).afterstop));
         ((EditText)(findViewById(R.id.sw_no_before))).setEnabled(false);
         ((EditText)(findViewById(R.id.sw_no_after))).setText("2");
+        ((EditText)(findViewById(R.id.et_early_time))).setText("5");
         ((Switch)findViewById(R.id.sw_before_tst)).setChecked(((Switch)findViewById(R.id.sw_after_tst)).isChecked());
         ((Switch)findViewById(R.id.sw_before_tst)).setEnabled(false);
         ((Switch)findViewById(R.id.sw_after_tst)).setChecked(false);
@@ -673,7 +799,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1 && resultCode == Activity.RESULT_OK) {
+        if (requestCode == 1 && resultCode == Activity.RESULT_OK) { //out
             if (!Environment.isExternalStorageManager())
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 4);
             //int MAX_PROGRESS = lis.size() + 3;
@@ -706,33 +832,27 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     break;
                 }
             }
-            switch (e2.speed)
-            {
-                case 360:
-                    sb.append("CC0000");
-                    break;
-                case 310:
-                case 300:
-                    sb.append("FF3300");
-                    break;
-                case 260:
-                    sb.append("FF6600");
-                    break;
-                case 210:
-                    sb.append("FF9900");
-                    break;
-                case 170:
-                    sb.append("032F94");
-                    break;
-                default:
-                    sb.append("00D3FC");
-                    break;
-            }
+            if(e2.speed > 310)
+                sb.append("CC0000");
+            else if(e2.speed > 290)
+                sb.append("FF3300");
+            else if(e2.speed > 230)
+                sb.append("FF6600");
+            else if(e2.speed > 190)
+                sb.append("FF9900");
+            else if(e2.speed > 150)
+                sb.append("CBCB00");
+            else
+                sb.append("33CC33");
             sb.append("\",\"remark\":\"采用");
             sb.append(train);
+            if(!this.ver.contains("&"))
+                sb.append("(" + this.ver + ")");
             if(((Switch)findViewById(R.id.sw_double)).isChecked())
                 sb.append("重联");
-            sb.append("型列车\",\"lineType\":1,\"company\":\"");
+            if(((!this.ver.endsWith("型"))&&(!this.ver.endsWith("版"))) || (((Switch)findViewById(R.id.sw_double)).isChecked()))
+                sb.append("型");
+            sb.append("列车\",\"lineType\":1,\"company\":\"");
             sb.append(rcps[selectC]);
             sb.append("\",\"route\":{\"up\":[");
             //progressDialog.setProgress(//progressDialog.getProgress() + 1);
@@ -799,7 +919,6 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                         j++;
                     }
                     if (b1) {
-                        //Share.rails[lis.get(i).Rail].locations.Reverse();
                         b1 = false;
                     }
                     //progressDialog.setProgress(//progressDialog.getProgress() + 1);
@@ -849,7 +968,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                         public void onClick(DialogInterface dialog, int which) {  }
                     }).create().show();
         }
-        else if(requestCode == 5 && resultCode == Activity.RESULT_OK) {
+        else if(requestCode == 5 && resultCode == Activity.RESULT_OK) { //save
             String path = data.getData().getPath().replace("/tree/primary:","/storage/emulated/0/")
                     +java.io.File.separatorChar+((EditText)findViewById(R.id.et_trainNumber)).getText()
                     .toString().replace("/","_")+".tlf";
@@ -880,6 +999,12 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             sb2.append(downhour);
             sb2.append(" ");
             sb2.append(downmin);
+            sb2.append("\n");
+            sb2.append(train);
+            sb2.append("\n");
+            sb2.append(ver);
+            sb2.append("\n");
+            sb2.append(((Switch)findViewById(R.id.sw_double)).isChecked() ? "t" : "f");
             //progressDialog2.setProgress(//progressDialog.getProgress() + 1);
             for (int i = 0; i < lis.size();i++) {
                 sb2.append("\n");
@@ -935,7 +1060,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             //progressDialog2.setProgress(MAX_PROGRESS2);
             //progressDialog2.cancel();
         }
-        else if(requestCode == 6 && resultCode == Activity.RESULT_OK) {
+        else if(requestCode == 6 && resultCode == Activity.RESULT_OK) { //open
             try {
                     String s = File.ReadAllText(data.getData().getPath().replace("/document/primary:", "/storage/emulated/0/"));
                     String[] str = s
@@ -973,7 +1098,31 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     tmp2 = downhour<10?"0"+Integer.toString(downhour):Integer.toString(downhour);
                     ((TextView)(findViewById(R.id.tv_downstart))).setText(tmp2+":"+tmp1);
                     //progressDialog.setProgress(//progressDialog.getProgress() + 1);
-                    for (int i = 3;i < str.length;i++) {
+                    train = str[3];
+                    ver = str[4];
+                    ((Button)findViewById(R.id.sp_emu)).setText(train + "(" + this.ver + ")");
+                    int tmp5 = 0, which = 0;
+                    for(EMU emu:Share.emus) {
+                        if(train.equals(emu.name))
+                            break;
+                        tmp5++;
+                    }
+                    for(String v:Share.emus.get(tmp5).versions) {
+                        if(v.equals(ver))
+                            break;
+                        which++;
+                    }
+                    if(Share.emus.get(tmp5).trains.get(which).size() > 9) {
+                        ((Switch) (findViewById(R.id.sw_double))).setEnabled(false);
+                        ((Switch) (findViewById(R.id.sw_double))).setChecked(false);
+                    }
+                    else
+                        ((Switch)(findViewById(R.id.sw_double))).setEnabled(true);
+                    if(str[5].equals("t"))
+                        ((Switch)findViewById(R.id.sw_double)).setChecked(true);
+                    else
+                        ((Switch)findViewById(R.id.sw_double)).setChecked(false);
+                    for (int i = 6;i < str.length;i++) {
                         strs = str[i].split(" ");
                         li = new ListItem(0,0,0,RunMode.ATP,0,0,0,false, false);
                         b7 = false;
@@ -1139,7 +1288,11 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         EMU e2 = null;
         int min = upmin + (60 * uphour);
         int j = 0;
-        boolean b,b1,b2,b3;
+        boolean b,b1,b2,b3,b4,c1,c,c2,c3,c4,c5;
+        int o;
+        List<String> kArray, tpd, tpeeds;
+        List<Double> mengths;
+        String[] ump2;
         for(EMU e : Share.emus) {
             if(e.name.equals(train)) {
                 e2 = e;
@@ -1168,7 +1321,6 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 t6 = tmp4.beforeteg;
                 tmp4.beforeteg = tmp4.afterteg;
                 tmp4.afterteg = t6;*/
-                //Toast.makeText(this, Integer.toString(lis.get(0).after), Toast.LENGTH_SHORT).show();
             }
         }
         ast = e2.ast;
@@ -1198,7 +1350,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 sb.append(Share.stations.get(lis.get(0).before).name);
             sb.append(" --:--  ");
             minute = upmin;
-            hourOfDay = uphour;
+            hourOfDay = uphour%24;
             tmp1 = minute < 10 ? "0" + Integer.toString(minute) : Integer.toString(minute);
             tmp3 = hourOfDay < 10 ? "0" + Integer.toString(hourOfDay) : Integer.toString(hourOfDay);
             sb.append(tmp3);
@@ -1250,6 +1402,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                             min += lis.get(i).beforestop;
                             minute = min % 60;
                             hourOfDay = min / 60;
+                            hourOfDay = hourOfDay % 24;
                             tmp1 = minute < 10 ? "0" + Integer.toString(minute) : Integer.toString(minute);
                             tmp3 = hourOfDay < 10 ? "0" + Integer.toString(hourOfDay) : Integer.toString(hourOfDay);
                             sb.append(" ");
@@ -1276,9 +1429,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                             lengths = new List<>();
                             speeds = new List<>();
                             length = 0;
-                            for (int t = Share.rails.get(lis.get(i).line).stations.size() - 1; t >= 0; t--) {
+                            for (int t = Share.rails.get(lis.get(i).line).stations.size() - 1; t >= 0; t--)
                                 jArray.add(Share.rails.get(lis.get(i).line).stations.get(t));
-                            }
                             tmp2 = Share.rails.get(lis.get(i).line).speeds.split("\n");
                             for (int t = tmp2.length - 1; t >= 0; t--) {
                                 if ((!tmp2[t].startsWith("atp"))
@@ -1290,23 +1442,15 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                     speeds.add(tmp2[t]);
                                 spd.add(tmp2[t]);
                             }
-                            for (int t = Share.rails.get(lis.get(i).line).lengths.size() - 1; t >= 0; t--) {
+                            for (int t = Share.rails.get(lis.get(i).line).lengths.size() - 1; t >= 0; t--)
                                 lengths.add(Share.rails.get(lis.get(i).line).lengths.get(t));
-                            }
                             j = 0;
                             b = false;
                             continue;
                         }
-                        if(!b1 && j > 0)
-                            length += lengths.get(j-1);
-                        if(b1 && j < lengths.size())
-                            length += lengths.get(j);
                         for (String stat:speeds) {
                             b3 = false;
                             m = -1;
-                            if (up == false) {
-                                up = false;
-                            }
                             for (int l = j; l < jArray.size(); l++) {
                                 if (jArray.get(l).equals(stat)) {
                                     m = l;
@@ -1328,10 +1472,12 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                         _speed = Integer.valueOf(spd.get(k));
                                     else if (spd.get(k).startsWith("ss") && (lis.get(i).mode == RunMode.Express))
                                         _speed = Integer.valueOf(spd.get(k).substring(3));
-                                    else if (spd.get(k).startsWith("ms") && (lis.get(i).mode == RunMode.MaxSpeed))
+                                    else if (spd.get(k).startsWith("ms") && (lis.get(i).mode != RunMode.Express) && (b2 != true))
                                         _speed = Integer.valueOf(spd.get(k).substring(3));
-                                    else if (spd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.ATP))
+                                    else if (spd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.ATP)) {
                                         _speed = Integer.valueOf(spd.get(k).substring(4));
+                                        b2 = true;
+                                    }
                                 }
                                 b2 = false;
                                 if(_speed > speed) {
@@ -1342,12 +1488,129 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                             _speed = speed - 6;
                                             break;
                                         case Express:
-                                            _speed = speed - 15;
+                                            _speed = speed - 15; break;
                                         case MaxSpeed:
                                             _speed = speed - 10;
                                             break;
                                     }
-                                }
+                                }//找到下条线路限速
+                                /*if (i < lis.size() - 1) {
+                                    if (lis.get(i).afterstop == 0) {
+                                        c1 = false;
+                                        c5 = false;
+                                        tpd = new List<>();
+                                        tpeeds = new List<>();
+                                        ump2 = Share.rails.get(lis.get(i + 1).line).speeds.split("\n");
+                                        for (int s = 0; s < ump2.length; s++) {
+                                            if ((!ump2[s].startsWith("atp"))
+                                                    && (!ump2[s].startsWith("ms"))
+                                                    && (!ump2[s].startsWith("ss"))
+                                                    && (!ump2[s].startsWith("1")) && (!ump2[s].startsWith("2")) && (!ump2[s].startsWith("3"))
+                                                    && (!ump2[s].startsWith("4")) && (!ump2[s].startsWith("5")) && (!ump2[s].startsWith("6"))
+                                                    && (!ump2[s].startsWith("7")) && (!ump2[s].startsWith("8")) && (!ump2[s].startsWith("9")))
+                                                tpeeds.add(ump2[s]);
+                                            tpd.add(ump2[s]);
+                                        }
+                                        b1 = false;
+                                        c = false;
+                                        kArray = Share.rails.get(lis.get(i + 1).line).stations;
+                                        mengths = Share.rails.get(lis.get(i + 1).line).lengths;
+                                        for (int n = 0; n < Share.rails.get(lis.get(i + 1).line).stations.size(); n++) {
+                                            if (kArray.get(n).equals(Share.stations.get(lis.get(i + 1).after).name)) {
+                                                if (c == false) {
+                                                    c1 = true;
+                                                    kArray = new List<>();
+                                                    tpd = new List<>();
+                                                    mengths = new List<>();
+                                                    tpeeds = new List<>();
+                                                    for (int t = Share.rails.get(lis.get(i + 1).line).stations.size() - 1; t >= 0; t--)
+                                                        kArray.add(Share.rails.get(lis.get(i + 1).line).stations.get(t));
+                                                    ump2 = Share.rails.get(lis.get(i + 1).line).speeds.split("\n");
+                                                    for (int t = ump2.length - 1; t >= 0; t--) {
+                                                        if ((!ump2[t].startsWith("atp"))
+                                                                && (!ump2[t].startsWith("ms"))
+                                                                && (!ump2[t].startsWith("ss"))
+                                                                && (!ump2[t].startsWith("1")) && (!ump2[t].startsWith("2")) && (!ump2[t].startsWith("3"))
+                                                                && (!ump2[t].startsWith("4")) && (!ump2[t].startsWith("5")) && (!ump2[t].startsWith("6"))
+                                                                && (!ump2[t].startsWith("7")) && (!ump2[t].startsWith("8")) && (!ump2[t].startsWith("9")))
+                                                            tpeeds.add(ump2[t]);
+                                                        tpd.add(ump2[t]);
+                                                    }
+                                                    for (int t = Share.rails.get(lis.get(i + 1).line).lengths.size() - 1; t >= 0; t--)
+                                                        mengths.add(Share.rails.get(lis.get(i + 1).line).lengths.get(t));
+                                                    n = 0;
+                                                    c = false;
+                                                    continue;
+                                                }
+                                                else
+                                                    break;
+                                            }
+                                            if (kArray.get(n).equals(Share.stations.get(lis.get(i + 1).before).name))
+                                                c = true;
+                                            if (c) {
+                                                for (String ttat:tpeeds) {
+                                                    c3 = false;
+                                                    o = -1;
+                                                    for (int l = n; l < kArray.size(); l++) {
+                                                        if (kArray.get(l).equals(ttat)) {
+                                                            o = l;
+                                                            c3 = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                    if((kArray.get(n).equals(ttat) || c3) && (!kArray.get(n).equals(Share.stations.get(lis.get(i + 1).before).name))) {
+                                                        c2 = false;
+                                                        c4 = false;
+                                                        for(int k = 0; k < tpd.size(); k++) {
+                                                            if(tpd.get(k).equals(ttat))
+                                                                break;
+                                                            if(tpd.get(k).startsWith("1")||tpd.get(k).startsWith("2")||
+                                                                    tpd.get(k).startsWith("3")||tpd.get(k).startsWith("4")||
+                                                                    tpd.get(k).startsWith("5")||tpd.get(k).startsWith("6")||
+                                                                    tpd.get(k).startsWith("7")||tpd.get(k).startsWith("8")||
+                                                                    tpd.get(k).startsWith("9")||tpd.get(k).startsWith("0"))
+                                                                aspeed = Integer.valueOf(tpd.get(k));
+                                                            else if (tpd.get(k).startsWith("ss") && (lis.get(i).mode == RunMode.Express))
+                                                                aspeed = Integer.valueOf(tpd.get(k).substring(3));
+                                                            else if (tpd.get(k).startsWith("ms") && (lis.get(i).mode != RunMode.Express) && (c4 != true)) {
+                                                                if((lis.get(i).mode != RunMode.Express))
+                                                                    aspeed = Integer.valueOf(tpd.get(k).substring(3));
+                                                            }
+                                                            else if (tpd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.ATP)) {
+                                                                aspeed = Integer.valueOf(tpd.get(k).substring(4));
+                                                                c4 = true;
+                                                            }
+                                                        }
+                                                        c2 = false;
+                                                        c4 = false;
+                                                        if(aspeed > speed) {
+                                                            if(speed == 310)
+                                                                speed += 5;
+                                                            switch (lis.get(i).mode) {
+                                                                case ATP:
+                                                                    aspeed = speed - 6;
+                                                                    break;
+                                                                case Express:
+                                                                    aspeed = speed - 15;
+                                                                case MaxSpeed:
+                                                                    aspeed = speed - 10;
+                                                                    break;
+                                                            }
+                                                        }
+                                                        c5 = true;
+                                                        break;
+                                                    }
+                                                }
+                                                if (c5) {
+                                                    c5 = false;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                        aspeed = 0;
+                                }*/
                                 min += Calc(length, ast, bspeed, aspeed, _speed, lis.get(i).earlytime);
                                 bspeed = _speed;
                                 if (aspeed == 0) bspeed = 0;
@@ -1368,6 +1631,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                     sb.append(Share.stations.get(lis.get(i).after).name);
                                 minute = min % 60;
                                 hourOfDay = min / 60;
+                                hourOfDay = hourOfDay % 24;
                                 sb.append(" ");
                                 tmp1 = minute < 10 ? "0" + Integer.toString(minute) : Integer.toString(minute);
                                 tmp3 = hourOfDay < 10 ? "0" + Integer.toString(hourOfDay) : Integer.toString(hourOfDay);
@@ -1384,15 +1648,18 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                         break;
                     }
                     if (b) {
-                        if(!b1 && j > 0)
-                            length += lengths.get(j-1);
+                        //if(!b1 && j > 0)
+                        //    length += lengths.get(j-1);
                         for (String stat:speeds) {
                             if(jArray.get(j).equals(stat) && (!jArray.get(j).equals(Share.stations.get(lis.get(i).before).name))) {
                                 b2 = false;
+                                b4 = false;
                                 aspeed = 0;
                                 for(int k = 0; k < spd.size(); k++) {
-                                    if(spd.get(k).equals(stat))
+                                    if(spd.get(k).equals(stat)) {
                                         b2 = true;
+                                        b4 = false;
+                                    }
                                     if(spd.get(k).startsWith("1")||spd.get(k).startsWith("2")||
                                             spd.get(k).startsWith("3")||spd.get(k).startsWith("4")||
                                             spd.get(k).startsWith("5")||spd.get(k).startsWith("6")||
@@ -1414,16 +1681,17 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                         else
                                             _speed = Integer.valueOf(spd.get(k).substring(3));
                                     }
-                                    else if (spd.get(k).startsWith("ms") && (lis.get(i).mode != RunMode.Express)) {
+                                    else if (spd.get(k).startsWith("ms") && (lis.get(i).mode != RunMode.Express) && (b4 != true)) {
                                         if (b2) {
                                             aspeed = Integer.valueOf(spd.get(k).substring(3));
                                             if((lis.get(i).mode == RunMode.MaxSpeed))
                                                 break;
                                         }
-                                        else if(lis.get(i).mode != RunMode.Express)
+                                        else if((lis.get(i).mode != RunMode.Express))
                                             _speed = Integer.valueOf(spd.get(k).substring(3));
                                     }
                                     else if (spd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.ATP)) {
+                                        b4 = true;
                                         if (b2) {
                                             aspeed = Integer.valueOf(spd.get(k).substring(4));
                                             break;
@@ -1431,12 +1699,13 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                         else
                                             _speed = Integer.valueOf(spd.get(k).substring(4));
                                     }
-                                    else if (lis.get(i).mode == RunMode.ATP) {
+                                    /*else if (lis.get(i).mode == RunMode.ATP) {
                                         if (b2)
                                             break;
-                                    }
+                                    }*/
                                 }
                                 b2 = false;
+                                b4 = false;
                                 if(_speed > speed) {
                                     if(speed == 310)
                                         speed += 5;
@@ -1458,7 +1727,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                 break;
                             }
                         }
-                        if(b1 && j < lengths.size())
+                        if(//b1 &&
+                           j < lengths.size())
                             length += lengths.get(j);
                     }// if b==true
                     j++;

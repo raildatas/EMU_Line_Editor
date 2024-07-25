@@ -1,13 +1,10 @@
 package com.example.editor;
 
-//import java.util.Dictionary;
-
 public class Train {
     public Dictionary<SeatType, Byte> dic;
     public byte number;
 
-    public Train(List<Byte> person, List<SeatType> seatTypes, Byte number)
-    {
+    public Train(List<Byte> person, List<SeatType> seatTypes, Byte number) {
         dic = new Dictionary<SeatType, Byte>();
         if (seatTypes.size() != person.size())
         {

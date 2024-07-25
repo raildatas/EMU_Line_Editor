@@ -11,5 +11,10 @@ public enum SeatType {
     WY ,
     WE ,
     ZEC,
-    WRC
+    WRC,
+    UY,
+    DGN,
+    D,
+    ZYC,
+    BZ
 }

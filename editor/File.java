@@ -22,37 +22,6 @@ public class File {
         }
         bw.close();
     }
-    public static String ReadAllText(Uri path) throws Exception {
-        BufferedReader br = null;
-        java.io.File file = new java.io.File(URI.create(path.getPath()));
-        Exception e = null;
-        if(!file.exists())
-            return "";
-        StringBuilder sb = new StringBuilder();
-        try {
-            br = new BufferedReader(new FileReader(file));
-            String line;
-            while(true)
-            {
-                line = br.readLine();
-                if(line == null)
-                    break;
-                sb.append(line);
-                sb.append('\n');
-            }
-        }
-        catch (Exception e2) { e = e2; }
-        finally {
-            if(br != null)
-            {
-                try { br.close(); }
-                catch (Exception e1) { throw e1; }
-            }
-        }
-        if(sb.length()>2)
-            return sb.toString().substring(0,sb.length()-2);
-        return sb.toString();
-    }
     public static String ReadAllText(String path) throws Exception {
         BufferedReader br = null;
         java.io.File file = new java.io.File(path);

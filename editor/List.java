@@ -9,8 +9,7 @@ public class List<T> extends ArrayList<T> {
             add(index[i]);
         }
     }
-    public void Add(T item)
-    {
+    public void Add(T item) {
         add(item);
     }
 }
