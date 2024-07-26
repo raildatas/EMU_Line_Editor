@@ -29,9 +29,10 @@ import com.example.myapplication.R;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import okhttp3.*;
 
-//
 public class MainActivity extends AppCompatActivity implements View.OnFocusChangeListener {
     boolean select = false;
     boolean flag = true;
@@ -810,154 +811,13 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             //progressDialog.setProgressStyle(//progressDialog.STYLE_HORIZONTAL);
             //progressDialog.setMax(MAX_PROGRESS);
             //progressDialog.show();
-
-            Uri uri = data.getData();
-            StringBuilder sb = new StringBuilder();
-            StringBuilder buffer = new StringBuilder();
-            JSONArray jArray,j2;
-            JSONObject tmp;
-            boolean b = false;
-            boolean b1 = false;
-            int j = 0;
-            j2 = new JSONArray();
-            //progressDialog.setProgress(//progressDialog.getProgress() + 1);
-            sb.append("{\"fileVersion\":1,\"cityName\":\"中华人民共和国\",\"lineName\":\"");
-            sb.append(((EditText)findViewById(R.id.et_trainNumber)).getText());
-            sb.append("\",\"lineColor\":\"#");
-            EMU e2 = null;
-            for(EMU e : Share.emus)
-            {
-                if(e.name.equals(train)) {
-                    e2 = e;
-                    break;
-                }
-            }
-            if(e2.speed > 310)
-                sb.append("CC0000");
-            else if(e2.speed > 290)
-                sb.append("FF3300");
-            else if(e2.speed > 230)
-                sb.append("FF6600");
-            else if(e2.speed > 190)
-                sb.append("FF9900");
-            else if(e2.speed > 150)
-                sb.append("CBCB00");
-            else
-                sb.append("33CC33");
-            sb.append("\",\"remark\":\"采用");
-            sb.append(train);
-            if(!this.ver.contains("&"))
-                sb.append("(" + this.ver + ")");
-            if(((Switch)findViewById(R.id.sw_double)).isChecked())
-                sb.append("重联");
-            if(((!this.ver.endsWith("型"))&&(!this.ver.endsWith("版"))) || (((Switch)findViewById(R.id.sw_double)).isChecked()))
-                sb.append("型");
-            sb.append("列车\",\"lineType\":1,\"company\":\"");
-            sb.append(rcps[selectC]);
-            sb.append("\",\"route\":{\"up\":[");
-            //progressDialog.setProgress(//progressDialog.getProgress() + 1);
-            int i = 0;
-            int k = 0;
-            try {
-                for (i = 0; i < lis.size(); i++) {
-                    b1 = false;
-                    jArray = Share.rails.get(lis.get(i).line).locations;
-                    //j = 0;
-                    b = false;
-                    for (j = 0; j < jArray.length(); ) {
-                        if (jArray.getJSONObject(j).getString("name").equals(Share.stations.get(lis.get(i).before).name))
-                            b = true;
-                        tmp = jArray.getJSONObject(j);
-                        if (jArray.getJSONObject(j).getString("name").equals(Share.stations.get(lis.get(i).after).name)) {
-                            if (b == false) {
-                                b1 = true;
-                                jArray = new JSONArray();
-                                for (int t =  Share.rails.get(lis.get(i).line).locations.length()-1;t >= 0;t--) {
-                                    jArray.put(Share.rails.get(lis.get(i).line).locations.getJSONObject(t));
-                                }
-                                /*boolean c = false;
-                                for (k = 0; k < jArray.length(); ) {
-                                    if (!jArray.getJSONObject(k).getString("name").equals(Share.stations.get(lis.get(i).before).name))
-                                        c = true;
-                                    tmp = jArray.getJSONObject(k);
-                                    if (jArray.getJSONObject(k).getString("name").equals(Share.stations.get(lis.get(i).after).name)) {
-                                        sb.append(',');
-                                        if (i == lis.size() - 1)
-                                            sb.append(tmp.toString());
-                                        break;
-                                    }
-                                    if (c) {
-                                        if (!jArray.getJSONObject(k).getString("name").equals(Share.stations.get(lis.get(i).before).name))
-                                            tmp.put("type", "waypoint");
-                                        sb.append(tmp.toString());
-                                        if (!jArray.getJSONObject(k+1).getString("name").equals(Share.stations.get(lis.get(i).after).name))
-                                            sb.append(",");
-                                    }
-                                    k++;
-                                }*/
-                                j = 0;
-                                b = false;
-                                continue;
-                            }
-                            sb.append(',');
-                            if (i == lis.size() - 1) {
-                                j2.put(tmp);
-                                sb.append(tmp.toString());
-                            }
-                            break;
-                        }
-                        if (b) {
-                            if ((!jArray.getJSONObject(j).getString("name").equals(Share.stations.get(lis.get(i).before).name))
-                                || (jArray.getJSONObject(j).getString("name").equals(Share.stations.get(lis.get(i).before).name)
-                                    && (lis.get(i).beforestop == 0)))
-                                tmp.put("type", "waypoint");
-                            sb.append(tmp.toString());
-                            j2.put(tmp);
-                            if (!jArray.getJSONObject(j+1).getString("name").equals(Share.stations.get(lis.get(i).after).name))
-                                sb.append(",");
-                        }
-                        j++;
-                    }
-                    if (b1) {
-                        b1 = false;
-                    }
-                    //progressDialog.setProgress(//progressDialog.getProgress() + 1);
-                }
-                sb.append("],\"down\":[");
-                for (int t = j2.length() - 1; t >= 0; t--) {
-                    sb.append(j2.get(t));
-                    if (t > 0)
-                        sb.append(',');
-                }
-                sb.append("]},\"serviceTime\":{\"up\":\"");
-                sb.append(upTime.replace("\n", "\\n"));
-                sb.append("\",\"down\":\"");
-                sb.append(downTime.replace("\n", "\\n"));
-                sb.append("\"},\"fare\":{\"strategy\":\"multilevel\",\"enableRing\":\"0\",\"desc\":\"在“票价”面板设置\",\"single\":{\"price\":\"1.00\"},\"multilevel\":{\"startPrice\":\"0.00\",\"startingDistance\":\"0\",\"magnification\":\"0.35\",\"magnificationAttenuation\":\"0.00\",\"increaseBase\":\"0.001\",\"maxPrice\":\"Infinity\"},\"text\":{\"text\":\"\"},\"customize\":{\"formula\":\"0.2*distance\"}}}");
-                //progressDialog.setProgress(MAX_PROGRESS);
-                //java.io.File.separatorChar+"storage"+java.io.File.separatorChar+"Download"
-                File.WriteAllText(uri.getPath().replace("/tree/primary:","/storage/emulated/0/")
-                        +java.io.File.separatorChar+((EditText)findViewById(R.id.et_trainNumber)).getText()
-                        .toString().replace("/","_")+".bll", sb.toString());
-                //progressDialog.cancel();
-                new AlertDialog.Builder(this)
-                    .setTitle("提示")
-                    .setMessage("导出成功")
-                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {  }
-                    }).create().show();
-            }
-            catch (Exception e) {
-                //progressDialog.cancel();
-                new AlertDialog.Builder(this)
-                   .setTitle("提示")
-                   .setMessage("导出失败")
-                   .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {  }
-                   }).create().show();
-            }
+            AtomicBoolean isshow = new AtomicBoolean(false);
+            new AlertDialog.Builder(this)
+                    .setTitle("是否在地图中显示到发时间？")
+                    .setMessage("")
+                    .setPositiveButton("是", (dialog, which) -> { isshow.set(true); Out(isshow, data); })
+                    .setNegativeButton("否", (dialog, which) -> { isshow.set(false); Out(isshow, data); })
+                    .create().show();
         }
         else if((requestCode == 2 &&(!Environment.isExternalStorageManager()))) {
             new AlertDialog.Builder(this)
@@ -1005,6 +865,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             sb2.append(ver);
             sb2.append("\n");
             sb2.append(((Switch)findViewById(R.id.sw_double)).isChecked() ? "t" : "f");
+            sb2.append("\n");
+            sb2.append(((EditText)findViewById(R.id.et_trainNumber)).getText());
             //progressDialog2.setProgress(//progressDialog.getProgress() + 1);
             for (int i = 0; i < lis.size();i++) {
                 sb2.append("\n");
@@ -1122,7 +984,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                         ((Switch)findViewById(R.id.sw_double)).setChecked(true);
                     else
                         ((Switch)findViewById(R.id.sw_double)).setChecked(false);
-                    for (int i = 6;i < str.length;i++) {
+                    ((EditText)findViewById(R.id.et_trainNumber)).setText(str[6]);
+                    for (int i = 7;i < str.length;i++) {
                         strs = str[i].split(" ");
                         li = new ListItem(0,0,0,RunMode.ATP,0,0,0,false, false);
                         b7 = false;
@@ -1241,6 +1104,253 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                             public void onClick(DialogInterface dialog, int which) {  }
                         }).create().show();
             }
+        }
+    }
+    public void Out(AtomicBoolean isshow, Intent data) {
+        Uri uri = data.getData();
+        StringBuilder sb = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
+        String tsta, tsto;
+        String[] ttime;
+        JSONArray jArray,j2;
+        JSONObject tmp;
+        boolean b = false;
+        boolean b1 = false;
+        int j = 0;
+        j2 = new JSONArray();
+        //progressDialog.setProgress(//progressDialog.getProgress() + 1);
+        sb.append("{\"fileVersion\":1,\"cityName\":\"中华人民共和国\",\"lineName\":\"");
+        sb.append(((EditText)findViewById(R.id.et_trainNumber)).getText());
+        sb.append("\",\"lineColor\":\"#");
+        EMU e2 = null;
+        for(EMU e : Share.emus) {
+            if(e.name.equals(train)) {
+                e2 = e;
+                break;
+            }
+        }
+        if(e2.speed > 310)
+            sb.append("CC0000");
+        else if(e2.speed > 290)
+            sb.append("FF3300");
+        else if(e2.speed > 230)
+            sb.append("FF6600");
+        else if(e2.speed > 190)
+            sb.append("FF9900");
+        else if(e2.speed > 150)
+            sb.append("CBCB00");
+        else
+            sb.append("33CC33");
+        sb.append("\",\"remark\":\"采用");
+        sb.append(train);
+        if(!this.ver.contains("&"))
+            sb.append("(" + this.ver + ")");
+        if(((Switch)findViewById(R.id.sw_double)).isChecked())
+            sb.append("重联");
+        if(((!this.ver.endsWith("型"))&&(!this.ver.endsWith("版"))) || (((Switch)findViewById(R.id.sw_double)).isChecked()))
+            sb.append("型");
+        sb.append("列车\",\"lineType\":1");
+        sb.append(",\"company\":\"");
+        sb.append(rcps[selectC]);
+        sb.append("\",\"route\":{\"up\":[");
+        //progressDialog.setProgress(//progressDialog.getProgress() + 1);
+        int i = 0;
+        int k = 0;
+        int tt = 0;
+        try {
+            for (i = 0; i < lis.size(); i++) {
+                b1 = false;
+                jArray = Share.rails.get(lis.get(i).line).locations;
+                //j = 0;
+                b = false;
+                for (j = 0; j < jArray.length(); ) {
+                    if (jArray.getJSONObject(j).getString("name").equals(Share.stations.get(lis.get(i).before).name))
+                        b = true;
+                    tmp = jArray.getJSONObject(j);
+                    if (jArray.getJSONObject(j).getString("name").equals(Share.stations.get(lis.get(i).after).name)) {
+                        if (b == false) {
+                            b1 = true;
+                            jArray = new JSONArray();
+                            for (int t =  Share.rails.get(lis.get(i).line).locations.length()-1;t >= 0;t--) {
+                                jArray.put(Share.rails.get(lis.get(i).line).locations.getJSONObject(t));
+                            }
+                                /*boolean c = false;
+                                for (k = 0; k < jArray.length(); ) {
+                                    if (!jArray.getJSONObject(k).getString("name").equals(Share.stations.get(lis.get(i).before).name))
+                                        c = true;
+                                    tmp = jArray.getJSONObject(k);
+                                    if (jArray.getJSONObject(k).getString("name").equals(Share.stations.get(lis.get(i).after).name)) {
+                                        sb.append(',');
+                                        if (i == lis.size() - 1)
+                                            sb.append(tmp.toString());
+                                        break;
+                                    }
+                                    if (c) {
+                                        if (!jArray.getJSONObject(k).getString("name").equals(Share.stations.get(lis.get(i).before).name))
+                                            tmp.put("type", "waypoint");
+                                        sb.append(tmp.toString());
+                                        if (!jArray.getJSONObject(k+1).getString("name").equals(Share.stations.get(lis.get(i).after).name))
+                                            sb.append(",");
+                                    }
+                                    k++;
+                                }*/
+                            j = 0;
+                            b = false;
+                            continue;
+                        }
+                        sb.append(',');
+                        if (i == lis.size() - 1) {
+                            /*if(isshow.get()) {
+                                ttime = upTime.split("\n")[tt].split(" ");
+                                tsta = "";
+                                for (int n = 0;n < ttime.length;n++) {
+                                    if(ttime[n].equals(""))
+                                        continue;
+                                    if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
+                                        tsta = ttime[n];
+                                        break;
+                                    }
+                                }
+                                tmp.put("name", jArray.getJSONObject(j).getString("name") + " " + tsta + "到");
+                            }*/
+                            j2.put(tmp);
+                            sb.append(tmp.toString());
+                        }
+                        break;
+                    }
+                    if (b) {
+                        if ((!jArray.getJSONObject(j).getString("name").equals(Share.stations.get(lis.get(i).before).name))
+                                || (jArray.getJSONObject(j).getString("name").equals(Share.stations.get(lis.get(i).before).name)
+                                && (lis.get(i).beforestop == 0)))
+                            tmp.put("type", "waypoint");
+                        else if(isshow.get()) {
+                            /*ttime = upTime.split("\n")[tt].split(" ");
+                            if (i == 0) {
+                                tsta = "";
+                                for (int n = 0;n < ttime.length;n++) {
+                                    if(ttime[n].equals(""))
+                                        continue;
+                                    if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
+                                        tsta = ttime[n];
+                                        break;
+                                    }
+                                }
+                                tmp.put("name", jArray.getJSONObject(j).getString("name") + " " + tsta + "开");
+                            }
+                            else {
+                                tsta = "";
+                                tsto = "";
+                                for (int n = 0;n < ttime.length;n++) {
+                                    if(ttime[n].equals(""))
+                                        continue;
+                                    if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
+                                        if(tsta.equals(""))
+                                            tsta = ttime[n];
+                                        else {
+                                            tsto = ttime[n];
+                                            break;
+                                        }
+                                    }
+                                }
+                                tmp.put("name", jArray.getJSONObject(j).getString("name") + " " + tsto + "到 " + tsta + "开");
+                            }
+                            tt++;
+                            */
+                        }
+                        sb.append(tmp.toString());
+                        j2.put(tmp);
+                        if (!jArray.getJSONObject(j+1).getString("name").equals(Share.stations.get(lis.get(i).after).name))
+                            sb.append(",");
+                    }
+                    j++;
+                }
+                if (b1) {
+                    b1 = false;
+                }
+                //progressDialog.setProgress(//progressDialog.getProgress() + 1);
+            }
+            sb.append("],\"down\":[");
+            tt = 0;
+            //if(!isshow.get()) {
+            for (int t = j2.length() - 1; t >= 0; t--) {/*
+                if(isshow.get() && j2.getJSONObject(t).getString("type").equals("station")) {
+                    ttime = downTime.split("\n")[tt].split(" ");
+                    if (t == j2.length() - 1) {
+                        tsta = "";
+                        for (int n = 0;n < ttime.length;n++) {
+                            if(ttime[n].equals(""))
+                                continue;
+                            if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
+                                tsta = ttime[n];
+                                break;
+                            }
+                        }
+                        j2.getJSONObject(t).put("name", j2.getJSONObject(t).getString("name") + " " + tsta + "开");
+                    }
+                    else if (t == 0) {
+                        tsta = "";
+                        for (int n = 0;n < ttime.length;n++) {
+                            if(ttime[n].equals(""))
+                                continue;
+                            if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
+                                tsta = ttime[n];
+                                break;
+                            }
+                        }
+                        j2.getJSONObject(t).put("name", j2.getJSONObject(t).getString("name") + " " + tsta + "到");
+                    }
+                    else {
+                        tsta = "";
+                        tsto = "";
+                        for (int n = 0;n < ttime.length;n++) {
+                            if(ttime[n].equals(""))
+                                continue;
+                            if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
+                                if(tsta.equals(""))
+                                    tsta = ttime[n];
+                                else {
+                                    tsto = ttime[n];
+                                    break;
+                                }
+                            }
+                        }
+                        j2.getJSONObject(t).put("name", j2.getJSONObject(t).getString("name") + " " + tsto + "到 " + tsta + "开");
+                    }
+                    tt++;
+                }*/
+                sb.append(j2.get(t));
+                if (t > 0)
+                    sb.append(',');
+            }
+            //}
+            sb.append("]},\"serviceTime\":{\"up\":\"");
+            sb.append(upTime.replace("\n", "\\n"));
+            sb.append("\",\"down\":\"");
+            sb.append(downTime.replace("\n", "\\n"));
+            sb.append("\"},\"fare\":{\"strategy\":\"multilevel\",\"enableRing\":\"0\",\"desc\":\"在“票价”面板设置\",\"single\":{\"price\":\"1.00\"},\"multilevel\":{\"startPrice\":\"0.00\",\"startingDistance\":\"0\",\"magnification\":\"0.35\",\"magnificationAttenuation\":\"0.00\",\"increaseBase\":\"0.001\",\"maxPrice\":\"Infinity\"},\"text\":{\"text\":\"\"},\"customize\":{\"formula\":\"0.2*distance\"}}}");
+            //progressDialog.setProgress(MAX_PROGRESS);
+            //java.io.File.separatorChar+"storage"+java.io.File.separatorChar+"Download"
+            File.WriteAllText(uri.getPath().replace("/tree/primary:","/storage/emulated/0/")
+                    +java.io.File.separatorChar+((EditText)findViewById(R.id.et_trainNumber)).getText()
+                    .toString().replace("/","_")+".bll", sb.toString());
+            //progressDialog.cancel();
+            new AlertDialog.Builder(this)
+                    .setTitle("提示")
+                    .setMessage("导出成功")
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {  }
+                    }).create().show();
+        }
+        catch (Exception e) {
+            //progressDialog.cancel();
+            new AlertDialog.Builder(this)
+                    .setTitle("提示")
+                    .setMessage("导出失败")
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {  }
+                    }).create().show();
         }
     }
     public void OutFile(View view) {
