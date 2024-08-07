@@ -53,4 +53,7 @@ public class File {
             return sb.toString().substring(0,sb.length()-1);
         return sb.toString();
     }
+    public static boolean Exists(String path) {
+        return new java.io.File(path).exists();
+    }
 }

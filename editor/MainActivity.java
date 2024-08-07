@@ -29,6 +29,7 @@ import com.example.myapplication.R;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.*;
@@ -43,6 +44,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     Dictionary<String, String> dic2 = new Dictionary<>();
     List<String> dk1 = new List<>();
     List<String> dk2 = new List<>();
+    List<TimeTime> uptimes = new List<>();
+    List<TimeTime> downtimes = new List<>();
     List<List<List<Integer>>> sss = new List<>();//small stations
     List<Integer> ssns = new List<>();//small station names
     String train = "";
@@ -50,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     List<ListItem> lis = new List<>();
     String upTime = "", downTime = "";
     String[] rcps = new String[0];
+    String appdir;
     private static double EARTH_RADIUS = 6378137;
 
     private static double rad(double d) {
@@ -65,8 +69,11 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         s = Math.round(s * 10000) / 10000;
         return s / 1000.0;
     }
-    public String Gethtml(String url) throws IOException {//爬虫
-        return new OkHttpClient().newCall(new Request.Builder().url(url).get().build()).execute().body().string();
+    public String Gethtml(String url, int delay) throws IOException {//爬虫
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        if(delay > 0)
+            builder = builder.connectTimeout(delay, TimeUnit.SECONDS);
+        return builder.build().newCall(new Request.Builder().url(url).get().build()).execute().body().string();
     }
     SeatType GetSeatType(String str) {//String转SeatType
         switch (str.toUpperCase()) {
@@ -199,48 +206,56 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             String[] replaceDatas = null;
             String html;
             double length;
+            appdir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar);
             try {
-                html = Gethtml("https://raildatas.github.io/emudata.html");
+                if(!File.Exists(appdir+"evnets.dta"))
+                    html = Gethtml("https://raildatas.github.io/ver.html", 0);
+                else {
+                    html = Gethtml("https://raildatas.github.io/ver.html", 10);
+                    if(File.ReadAllText(appdir + "ver.dta").equals(html))
+                        throw new Exception();
+                }
+                File.WriteAllText(appdir+"ver.dta",html);
+                html = Gethtml("https://raildatas.github.io/emudata.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 DataFiles.emuDatas = replace(html, '\r').split("\n");
-                //File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                        //+"emudata.dta",html);
-                html = Gethtml("https://raildatas.github.io/railwaydata.html");
+                File.WriteAllText(appdir+"emudata.dta",html);
+                html = Gethtml("https://raildatas.github.io/railwaydata.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 DataFiles.railDatas = replace(html, '\r').split("\n");
-                //File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                        //+"railwaydata.dta",html);
-                html = Gethtml("https://raildatas.github.io/replace.html");
+                File.WriteAllText(appdir+"railwaydata.dta",html);
+                html = Gethtml("https://raildatas.github.io/replace.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 replaceDatas = replace(html, '\r').split("\n");
-                //File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                        //+"replace.dta",html);
-                html = Gethtml("https://raildatas.github.io/rcp.html");
+                File.WriteAllText(appdir+"replace.dta",html);
+                html = Gethtml("https://raildatas.github.io/rcp.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 rcps = replace(html, '\r').split("\n");
-                //File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                        //+"rcp.dta",html);
-                html = Gethtml("https://raildatas.github.io/smallstations.html");
+                File.WriteAllText(appdir+"rcp.dta",html);
+                html = Gethtml("https://raildatas.github.io/smallstations.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 ssstrs = replace(html, '\r').split("\n");
-                //File.WriteAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                        //+"sss.dta",html);
-                html = Gethtml("https://raildatas.github.io/evnets.html");
+                File.WriteAllText(appdir+"smallstations.dta",html);
+                html = Gethtml("https://raildatas.github.io/evnets.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 evens = replace(html, '\r').split("\n");
+                File.WriteAllText(appdir+"evnets.dta",html);
             }
             catch (Exception e) {
-                System.exit(1);
-                try {
-                    html = File.ReadAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                            +"emudata.dta");
-                    DataFiles.emuDatas = replace(html, '\r').split("\n");
-                    html = File.ReadAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                            +"railwaydata.dta");
-                    DataFiles.railDatas = replace(html, '\r').split("\n");
-                    html = File.ReadAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                            +"replace.dta");
-                    replaceDatas = replace(html, '\r').split("\n");
-                    html = File.ReadAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar)
-                            +"rcp.dta");
-                    rcps = replace(html, '\r').split("\n");
-                }
-                catch (Exception e2) {
+                //System.exit(1);
+                if(!File.Exists(appdir+"evnets.dta"))
                     System.exit(1);
+                else {
+                    try {
+                        html = File.ReadAllText(appdir + "emudata.dta");
+                        DataFiles.emuDatas = replace(html, '\r').split("\n");
+                        html = File.ReadAllText(appdir + "railwaydata.dta");
+                        DataFiles.railDatas = replace(html, '\r').split("\n");
+                        html = File.ReadAllText(appdir + "replace.dta");
+                        replaceDatas = replace(html, '\r').split("\n");
+                        html = File.ReadAllText(appdir + "rcp.dta");
+                        rcps = replace(html, '\r').split("\n");
+                        html = File.ReadAllText(appdir + "smallstations.dta");
+                        ssstrs = replace(html, '\r').split("\n");
+                        html = File.ReadAllText(appdir + "evnets.dta");
+                        evens = replace(html, '\r').split("\n");
+                    } catch (Exception e2) {
+                        System.exit(1);
+                    }
                 }
             }
             try {
@@ -417,8 +432,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 }
                 selectB = i;
                 if(!b) {
-                    ((EditText)(findViewById(R.id.et_before))).setText("");
-                    new AlertDialog.Builder(MainActivity.this).setTitle("未找到起点站").create().show();
+                    //((EditText)(findViewById(R.id.et_before))).setText("");
+                    //new AlertDialog.Builder(MainActivity.this).setTitle("未找到起点站").create().show();
                 }
             }
             else {
@@ -626,8 +641,10 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                 k = 0;
                                 strs.add(Share.rails.get(lis.get(lis.size() - 1).line).name);
                             }
-                            if(zc && (sss.get(i).get(j).get(k) != lis.get(lis.size() - 1).line))
-                                strs.add(Share.rails.get(sss.get(i).get(j).get(k)).name);
+                            for(int l = 0;l < strs.size();l++) {
+                                if (zc && (!Share.rails.get(sss.get(i).get(j).get(k)).name.equals(strs.get(l))))
+                                    strs.add(Share.rails.get(sss.get(i).get(j).get(k)).name);
+                            }
                         }
                         if (zc == true)
                             zc = false;
@@ -636,7 +653,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 }
             }
         }
-        if (bIsSmall == false) {
+        if ((bIsSmall == false)||(b == false)) {
             for (Station item : Share.stations) {
                 if (item.name
                         .equals(((EditText) (findViewById(R.id.et_before))).getText().toString())
@@ -818,6 +835,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     .setPositiveButton("是", (dialog, which) -> { isshow.set(true); Out(isshow, data); })
                     .setNegativeButton("否", (dialog, which) -> { isshow.set(false); Out(isshow, data); })
                     .create().show();
+            //Out(isshow, data);
         }
         else if((requestCode == 2 &&(!Environment.isExternalStorageManager()))) {
             new AlertDialog.Builder(this)
@@ -939,6 +957,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     lis.clear();
                     boolean b7;
                     ListItem li;
+                    uptimes = new List<>();
+                    downtimes = new List<>();
                     for(int i = 0; i < rcps.length;i++) {
                         if(rcps[i].equals(str[0])) {
                             selectC = i;
@@ -1106,13 +1126,25 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             }
         }
     }
+    public String ToTime(int min) {
+        String tmp1,tmp3;
+        StringBuilder sb = new StringBuilder();
+        int minute,hourOfDay;
+        minute = min % 60;
+        hourOfDay = min / 60;
+        hourOfDay = hourOfDay % 24;
+        tmp1 = minute < 10 ? "0" + Integer.toString(minute) : Integer.toString(minute);
+        tmp3 = hourOfDay < 10 ? "0" + Integer.toString(hourOfDay) : Integer.toString(hourOfDay);
+        sb.append(tmp3);
+        sb.append(":");
+        sb.append(tmp1);
+        return sb.toString();
+    }
     public void Out(AtomicBoolean isshow, Intent data) {
         Uri uri = data.getData();
         StringBuilder sb = new StringBuilder();
-        StringBuilder buffer = new StringBuilder();
-        String tsta, tsto;
-        String[] ttime;
         JSONArray jArray,j2;
+        String name;
         JSONObject tmp;
         boolean b = false;
         boolean b1 = false;
@@ -1200,19 +1232,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                         }
                         sb.append(',');
                         if (i == lis.size() - 1) {
-                            /*if(isshow.get()) {
-                                ttime = upTime.split("\n")[tt].split(" ");
-                                tsta = "";
-                                for (int n = 0;n < ttime.length;n++) {
-                                    if(ttime[n].equals(""))
-                                        continue;
-                                    if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
-                                        tsta = ttime[n];
-                                        break;
-                                    }
-                                }
-                                tmp.put("name", jArray.getJSONObject(j).getString("name") + " " + tsta + "到");
-                            }*/
+                            if(isshow.get())
+                                tmp.put("name", jArray.getJSONObject(j).getString("name") + " " + ToTime(uptimes.get(tt).arriveTime) + "到");
                             j2.put(tmp);
                             sb.append(tmp.toString());
                         }
@@ -1224,38 +1245,11 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                 && (lis.get(i).beforestop == 0)))
                             tmp.put("type", "waypoint");
                         else if(isshow.get()) {
-                            /*ttime = upTime.split("\n")[tt].split(" ");
-                            if (i == 0) {
-                                tsta = "";
-                                for (int n = 0;n < ttime.length;n++) {
-                                    if(ttime[n].equals(""))
-                                        continue;
-                                    if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
-                                        tsta = ttime[n];
-                                        break;
-                                    }
-                                }
-                                tmp.put("name", jArray.getJSONObject(j).getString("name") + " " + tsta + "开");
-                            }
-                            else {
-                                tsta = "";
-                                tsto = "";
-                                for (int n = 0;n < ttime.length;n++) {
-                                    if(ttime[n].equals(""))
-                                        continue;
-                                    if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
-                                        if(tsta.equals(""))
-                                            tsta = ttime[n];
-                                        else {
-                                            tsto = ttime[n];
-                                            break;
-                                        }
-                                    }
-                                }
-                                tmp.put("name", jArray.getJSONObject(j).getString("name") + " " + tsto + "到 " + tsta + "开");
-                            }
+                            if (i == 0)
+                                tmp.put("name", jArray.getJSONObject(j).getString("name") + " " + ToTime(uptimes.get(tt).deparTime) + "开");
+                            else
+                                tmp.put("name", jArray.getJSONObject(j).getString("name") + " " + ToTime(uptimes.get(tt).arriveTime) + "到 " + ToTime(uptimes.get(tt).deparTime) + "开" + (uptimes.get(tt).teg?"技停":""));
                             tt++;
-                            */
                         }
                         sb.append(tmp.toString());
                         j2.put(tmp);
@@ -1272,52 +1266,20 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             sb.append("],\"down\":[");
             tt = 0;
             //if(!isshow.get()) {
-            for (int t = j2.length() - 1; t >= 0; t--) {/*
+            for (int t = j2.length() - 1; t >= 0; t--) {
                 if(isshow.get() && j2.getJSONObject(t).getString("type").equals("station")) {
-                    ttime = downTime.split("\n")[tt].split(" ");
+                    name = j2.getJSONObject(t).getString("name").split(" ")[0];
                     if (t == j2.length() - 1) {
-                        tsta = "";
-                        for (int n = 0;n < ttime.length;n++) {
-                            if(ttime[n].equals(""))
-                                continue;
-                            if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
-                                tsta = ttime[n];
-                                break;
-                            }
-                        }
-                        j2.getJSONObject(t).put("name", j2.getJSONObject(t).getString("name") + " " + tsta + "开");
+                        j2.getJSONObject(t).put("name", name + " " + ToTime(downtimes.get(tt).deparTime) + "开");
                     }
                     else if (t == 0) {
-                        tsta = "";
-                        for (int n = 0;n < ttime.length;n++) {
-                            if(ttime[n].equals(""))
-                                continue;
-                            if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
-                                tsta = ttime[n];
-                                break;
-                            }
-                        }
-                        j2.getJSONObject(t).put("name", j2.getJSONObject(t).getString("name") + " " + tsta + "到");
+                        j2.getJSONObject(t).put("name", name + " " + ToTime(downtimes.get(tt).arriveTime) + "到");
                     }
                     else {
-                        tsta = "";
-                        tsto = "";
-                        for (int n = 0;n < ttime.length;n++) {
-                            if(ttime[n].equals(""))
-                                continue;
-                            if(ttime[n].startsWith("0") || ttime[n].startsWith("1") || ttime[n].startsWith("2")) {
-                                if(tsta.equals(""))
-                                    tsta = ttime[n];
-                                else {
-                                    tsto = ttime[n];
-                                    break;
-                                }
-                            }
-                        }
-                        j2.getJSONObject(t).put("name", j2.getJSONObject(t).getString("name") + " " + tsto + "到 " + tsta + "开");
+                        j2.getJSONObject(t).put("name", name + " " + ToTime(downtimes.get(tt).arriveTime) + "到 " + ToTime(downtimes.get(tt).deparTime) + "开" + (downtimes.get(tt).teg?"技停":""));
                     }
                     tt++;
-                }*/
+                }
                 sb.append(j2.get(t));
                 if (t > 0)
                     sb.append(',');
@@ -1385,24 +1347,20 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             return "";
         List<ListItem> lis = new List<>();
         double ast;
-        int speed, max_length, bspeed = 0, aspeed = 0, _speed = 0, m, minute, hourOfDay;
+        int speed, max_length, bspeed = 0, aspeed = 0, _speed = 0, m, minute, hourOfDay, m2;
         double length;
         List<String> jArray = new List<>();
         String tmp, tmp1, tmp3;
         List<String> speeds = new List<>();
         List<Double> lengths = new List<>();
-        List<Integer> ints = new List<>();
         StringBuilder sb = new StringBuilder();
         String[] tmp2;
         List<String> spd = new List<>();
         EMU e2 = null;
         int min = upmin + (60 * uphour);
+        TimeTime tttmp = new TimeTime(0,0, false);
         int j = 0;
-        boolean b,b1,b2,b3,b4,c1,c,c2,c3,c4,c5;
-        int o;
-        List<String> kArray, tpd, tpeeds;
-        List<Double> mengths;
-        String[] ump2;
+        boolean b,b1,b2,b3,b4;
         for(EMU e : Share.emus) {
             if(e.name.equals(train)) {
                 e2 = e;
@@ -1413,8 +1371,6 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             lis = this.lis;
         else {
             ListItem tmp4;
-            int t5;
-            boolean t6;
             for (int i = this.lis.size() - 1;i >= 0;i--) {
                 tmp4 = this.lis.get(i);
                 lis.add(new ListItem(tmp4.after, tmp4.afterstop,
@@ -1467,7 +1423,16 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             sb.append(":");
             sb.append(tmp1);
             sb.append(" --\n");
+            m2 = min;
+            tttmp.arriveTime = -1;
+            tttmp.deparTime = m2;
+            tttmp.teg = false;
+            if(up)
+                uptimes.add(tttmp);
+            else
+                downtimes.add(tttmp);
         }
+        //开始计算
         try {
             for (int i = 0; i < lis.size(); i++) {
                 speeds.clear();
@@ -1501,14 +1466,18 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                             }
                             else
                                 sb.append(Share.stations.get(lis.get(i).before).name);
+                            tttmp = new TimeTime(0,0,false);
                             minute = min % 60;
                             hourOfDay = min / 60;
+                            hourOfDay = hourOfDay % 24;
                             sb.append(" ");
                             tmp1 = minute < 10 ? "0" + Integer.toString(minute) : Integer.toString(minute);
                             tmp3 = hourOfDay < 10 ? "0" + Integer.toString(hourOfDay) : Integer.toString(hourOfDay);
                             sb.append(tmp3);
                             sb.append(":");
                             sb.append(tmp1);
+                            m2 = min;
+                            tttmp.arriveTime = m2;
                             min += lis.get(i).beforestop;
                             minute = min % 60;
                             hourOfDay = min / 60;
@@ -1520,12 +1489,19 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                             sb.append(":");
                             sb.append(tmp1);
                             sb.append(" ");
+                            m2 = min;
+                            tttmp.deparTime = m2;
+                            tttmp.teg = lis.get(i).beforeteg;
                             if(lis.get(i).beforeteg)
                                 sb.append("技停\n");
                             else {
                                 sb.append(lis.get(i).beforestop);
                                 sb.append("分\n");
                             }
+                            if(up)
+                                uptimes.add(tttmp);
+                            else
+                                downtimes.add(tttmp);
                         }
                         b = true;
                         length = 0;
@@ -1749,6 +1725,15 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                 sb.append(":");
                                 sb.append(tmp1);
                                 sb.append("  --:--   --");
+                                tttmp = new TimeTime(0,0,false);
+                                m2 = min;
+                                tttmp.teg = false;
+                                tttmp.deparTime = -1;
+                                tttmp.arriveTime = m2;
+                                if(up)
+                                    uptimes.add(tttmp);
+                                else
+                                    downtimes.add(tttmp);
                             }
                             b = true;
                             length = 0;
@@ -1844,7 +1829,6 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     j++;
                 }
                 if (b1) {
-                    //Share.rails[lis.get(i).Rail].locations.Reverse();
                     b1 = false;
                 }
             }
