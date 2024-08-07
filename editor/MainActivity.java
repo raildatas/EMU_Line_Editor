@@ -628,6 +628,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         List<String> strs = new List<>();
         boolean b = false;
         boolean bIsSmall = false;
+        boolean b1 = false;
         if (lis.size() != 0) {
             for(int i = 0;i < ssns.size();i++) {
                 if (ssns.get(i) == lis.get(lis.size() - 1).after) {
@@ -641,10 +642,11 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                 k = 0;
                                 strs.add(Share.rails.get(lis.get(lis.size() - 1).line).name);
                             }
-                            for(int l = 0;l < strs.size();l++) {
-                                if (zc && (!Share.rails.get(sss.get(i).get(j).get(k)).name.equals(strs.get(l))))
-                                    strs.add(Share.rails.get(sss.get(i).get(j).get(k)).name);
-                            }
+                            b1 = false;
+                            for(int l = 0;l < strs.size();l++)
+                                b1 = b1||(!Share.rails.get(sss.get(i).get(j).get(k)).name.equals(strs.get(l)));
+                            if (zc && b1)
+                                strs.add(Share.rails.get(sss.get(i).get(j).get(k)).name);
                         }
                         if (zc == true)
                             zc = false;
