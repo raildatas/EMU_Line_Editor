@@ -20,6 +20,20 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text=""
+                android:id="@+id/tv_even"
+                android:textColor="#FF0000"
+                android:textSize="20sp"></TextView>
+        </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -116,7 +130,7 @@
             android:layout_width="320dp"
             android:layout_height="wrap_content"
             android:textSize="20sp"
-            android:text="C1 C2"
+            android:text="D301 D302"
             android:gravity="center"></EditText>
     </LinearLayout>
     <LinearLayout
