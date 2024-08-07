@@ -640,16 +640,21 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                 zc = true;
                                 b = true;
                                 k = 0;
-                                strs.add(Share.rails.get(lis.get(lis.size() - 1).line).name);
+                                //strs.add(Share.rails.get(lis.get(lis.size() - 1).line).name);
                             }
-                            b1 = false;
-                            for(int l = 0;l < strs.size();l++)
-                                b1 = b1||(!Share.rails.get(sss.get(i).get(j).get(k)).name.equals(strs.get(l)));
+                            b1 = false || (strs.size() == 0);
+                            for(int l = 0;l < strs.size();l++) {
+                                b1 = b1 || (!Share.rails.get(sss.get(i).get(j).get(k)).name.equals(strs.get(l)));
+                                if((!Share.rails.get(sss.get(i).get(j).get(k)).name.equals(strs.get(l))) == false) {
+                                    b1 = false;
+                                    break;
+                                }
+                            }
                             if (zc && b1)
                                 strs.add(Share.rails.get(sss.get(i).get(j).get(k)).name);
                         }
-                        if (zc == true)
-                            zc = false;
+                        zc = false;
+                        b1 = false;
                     }
                     break;
                 }
