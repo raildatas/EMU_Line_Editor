@@ -115,6 +115,36 @@
                 android:textSize="20sp"
                 android:text="10:06"></TextView>
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+            <Switch
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="非标杆模式"
+                android:id="@+id/sw_no350mode"
+                android:textSize="20dp"
+                android:checked="false">
+            </Switch>
+            <Switch
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="    自动寻路"
+                android:id="@+id/sw_isAstar"
+                android:textSize="20dp"
+                android:checked="false">
+            </Switch>
+            <Button
+                android:id="@+id/btn_set"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="⚙"
+                android:textColor="#ffffff"
+                android:backgroundTint="#0fafcf"
+                android:enabled="true"></Button>
+        </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">动车线路编辑器</string>
+    <string name="beta_name">ELE-24y05ba</string>
+    <string name="preview_name">ELE-v2.0-pre3</string>
 </resources>
