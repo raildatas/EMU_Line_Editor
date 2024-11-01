@@ -1,5 +1,6 @@
 package com.example.editor;
 
+import android.graphics.Bitmap;
 import android.net.Uri;
 
 import java.io.*;
@@ -54,6 +55,20 @@ public class File {
         return sb.toString();
     }
     public static boolean Exists(String path) {
+
         return new java.io.File(path).exists();
+    }
+    public static void WriteBitmap(String path, Bitmap bitmap) {
+        try {
+            java.io.File file = new java.io.File(path);
+            FileOutputStream fos = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

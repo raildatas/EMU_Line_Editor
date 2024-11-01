@@ -11,15 +11,19 @@ import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.StrictMode;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.Switch;
@@ -31,7 +35,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import okhttp3.*;
 
 public class MainActivity extends AppCompatActivity implements View.OnFocusChangeListener {
@@ -54,6 +57,11 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     String upTime = "", downTime = "";
     String[] rcps = new String[0];
     String appdir;
+    List<List<DFSItem>> dfsis = new List<List<DFSItem>>();
+    List<DFSItem> it;
+    double lat, lng = lat = -1;
+    int num = 0;
+    List<int[]> visit = new List<int[]>();
     private static double EARTH_RADIUS = 6378137;
 
     private static double rad(double d) {
@@ -116,15 +124,15 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     public String replace(String sourceString, char chElemData) {//删除字符
         String tmpString = "";
         tmpString += chElemData;
-        StringBuffer stringBuffer = new StringBuffer(sourceString);
+        StringBuffer StringBuffer = new StringBuffer(sourceString);
         int iFlag = -1;
         do {
-            iFlag = stringBuffer.indexOf(tmpString);
+            iFlag = StringBuffer.indexOf(tmpString);
             if (iFlag != -1) {
-                stringBuffer.deleteCharAt(iFlag);
+                StringBuffer.deleteCharAt(iFlag);
             }
         } while (iFlag != -1);
-        return stringBuffer.toString();
+        return StringBuffer.toString();
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -196,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             List<SeatType> seatTypes = new List<SeatType>();
             List<List<Train>> trains = new List<List<Train>>();
             List<String> ver = new List<String>();
-            String[] emustrs, trainstrs, seatstrs, temp, temp2, tmp3, evens = null, ssstrs = null;
+            String[] emustrs, trainstrs, seatstrs, temp, temp2, tmp3, evens = null, ssstrs = null, spdstrs;
             int tmp4;
             emustrs = new String[1];
             JSONObject railstr, tmp;
@@ -206,32 +214,39 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             String[] replaceDatas = null;
             String html;
             double length;
-            appdir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)+Character.toString(java.io.File.separatorChar);
+            appdir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) + Character.toString(java.io.File.separatorChar);
             try {
+                if (!File.Exists(appdir + "settings.ini"))
+                {
+                    File.WriteAllText(appdir + "settings.ini", "dataLink=https://raildatas.github.io/=asnr=399");
+                }
+                html = File.ReadAllText(appdir + "settings.ini");
+                for (int i = 0; i < html.split("=").length; i += 2)
+                    Share.settings.Add(html.split("=")[i], html.split("=")[i + 1]);
                 if(!File.Exists(appdir+"evnets.dta"))
-                    html = Gethtml("https://raildatas.github.io/ver.html", 0);
+                    html = Gethtml(Share.settings.GetE("dataLink") + "ver.html", 0);
                 else {
-                    html = Gethtml("https://raildatas.github.io/ver.html", 10);
+                    html = Gethtml(Share.settings.GetE("dataLink") + "ver.html", 10);
                     if(File.ReadAllText(appdir + "ver.dta").equals(html))
                         throw new Exception();
                 }
                 File.WriteAllText(appdir+"ver.dta",html);
-                html = Gethtml("https://raildatas.github.io/emudata.html",(File.Exists(appdir+"evnets.dta")?10:0));
+                html = Gethtml(Share.settings.GetE("dataLink") + "emudata.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 DataFiles.emuDatas = replace(html, '\r').split("\n");
                 File.WriteAllText(appdir+"emudata.dta",html);
-                html = Gethtml("https://raildatas.github.io/railwaydata.html",(File.Exists(appdir+"evnets.dta")?10:0));
+                html = Gethtml(Share.settings.GetE("dataLink") + "railwaydata.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 DataFiles.railDatas = replace(html, '\r').split("\n");
                 File.WriteAllText(appdir+"railwaydata.dta",html);
-                html = Gethtml("https://raildatas.github.io/replace.html",(File.Exists(appdir+"evnets.dta")?10:0));
+                html = Gethtml(Share.settings.GetE("dataLink") + "replace.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 replaceDatas = replace(html, '\r').split("\n");
                 File.WriteAllText(appdir+"replace.dta",html);
-                html = Gethtml("https://raildatas.github.io/rcp.html",(File.Exists(appdir+"evnets.dta")?10:0));
+                html = Gethtml(Share.settings.GetE("dataLink") + "rcp.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 rcps = replace(html, '\r').split("\n");
                 File.WriteAllText(appdir+"rcp.dta",html);
-                html = Gethtml("https://raildatas.github.io/smallstations.html",(File.Exists(appdir+"evnets.dta")?10:0));
+                html = Gethtml(Share.settings.GetE("dataLink") + "smallstations.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 ssstrs = replace(html, '\r').split("\n");
                 File.WriteAllText(appdir+"smallstations.dta",html);
-                html = Gethtml("https://raildatas.github.io/evnets.html",(File.Exists(appdir+"evnets.dta")?10:0));
+                html = Gethtml(Share.settings.GetE("dataLink") + "evnets.html",(File.Exists(appdir+"evnets.dta")?10:0));
                 evens = replace(html, '\r').split("\n");
                 File.WriteAllText(appdir+"evnets.dta",html);
             }
@@ -385,6 +400,27 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                         dk1.add(item2.split(" ")[0]);
                     }
                 }
+                for(int i = 0;i < Share.rails.size(); i++)
+                {
+                    spdstrs = Share.rails.get(i).speeds.split("\n");
+                    for(int j = 0;j < spdstrs.length;j++)
+                    {
+                        if (spdstrs[j].startsWith("1") || spdstrs[j].startsWith("2") || spdstrs[j].startsWith("3") || spdstrs[j].startsWith("4") || spdstrs[j].startsWith("5") ||
+                                spdstrs[j].startsWith("6") || spdstrs[j].startsWith("7") || spdstrs[j].startsWith("8") || spdstrs[j].startsWith("9"))
+                        {
+                            spdstrs[j] = "atp " + spdstrs[j] + "\n" +
+                                    "ms " + spdstrs[j] + "\n" +
+                                    "ss " + spdstrs[j];
+                        }
+                    }
+                    Share.rails.get(i).speeds = "";
+                    for (int j = 0;j < spdstrs.length;j++)
+                    {
+                        Share.rails.get(i).speeds += spdstrs[j];
+                        if (j + 1 < spdstrs.length)
+                            Share.rails.get(i).speeds += "\n";
+                    }
+                }
             }
             catch (Exception e) {
                 //System.exit(1);
@@ -405,6 +441,40 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 if ((Integer.valueOf(((EditText)findViewById(R.id.sw_no_after)).getText().toString()) > 0) &&
                     Share.stations.get(selectA).name.endsWith("线路所"))
                     ((EditText)findViewById(R.id.sw_no_after)).setText("0");
+            }
+        });
+        ((Switch)findViewById(R.id.sw_no350mode)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SetTime();
+            }
+        });
+        ((Switch)findViewById(R.id.sw_isAstar)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                {
+                    ((Button)findViewById(R.id.sp_lineName)).setEnabled(false);
+                    ((Button)findViewById(R.id.sp_lineName)).setText("");
+                    ((Button)findViewById(R.id.sp_after)).setText("");
+                    ((Button)findViewById(R.id.sp_after)).setEnabled(true);
+                }
+                else
+                {
+                    if (((Button)findViewById(R.id.sp_lineName)).getText().toString().equals(""))
+                        ((Button)findViewById(R.id.sp_after)).setEnabled(false);
+                    ((Button)findViewById(R.id.sp_lineName)).setEnabled(true);
+                    ((Button)findViewById(R.id.sp_lineName)).setText("");
+                    ((Button)findViewById(R.id.sp_after)).setText("");
+                }
+            }
+        });
+        ((Button)findViewById(R.id.btn_set)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent();
+                intent.setClass(MainActivity.this,SettingsActivity.class);
+                startActivity(intent);
             }
         });
     }
@@ -523,7 +593,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             ((Button)(findViewById(R.id.sp_lineName))).setText("");
             ((Button)(findViewById(R.id.sp_after))).setText("");
             ((Button)(findViewById(R.id.btn_add))).setEnabled(false);
-            ((Button)(findViewById(R.id.sp_after))).setEnabled(false);
+            if(!((Switch)findViewById(R.id.sw_isAstar)).isChecked())
+                ((Button)(findViewById(R.id.sp_after))).setEnabled(false);
             ((EditText)(findViewById(R.id.sw_no_after))).setText("2");
             ((EditText)(findViewById(R.id.et_early_time))).setText("5");
             ((Switch)findViewById(R.id.sw_after_tst)).setChecked(false);
@@ -716,6 +787,29 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         }
     }
     public void ChangeAfter(View view) {
+        if(((Switch)findViewById(R.id.sw_isAstar)).isChecked())
+        {
+            EditText et = new EditText(this);
+            new AlertDialog.Builder(this)
+                    .setTitle("请输入车站")
+                    .setView(et)
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            for (Station stat:Share.stations) {
+                                if (stat.name.equals(et.getText().toString()))
+                                {
+                                    ((Button)findViewById(R.id.sp_after)).setText(et.getText());
+                                    ((Button)findViewById(R.id.btn_add)).setEnabled(true);
+                                    return;
+                                }
+                            }
+                            ((Button)findViewById(R.id.btn_add)).setEnabled(false);
+                        }
+                    })
+                    .create().show();
+            return;
+        }
         List<String> strs = new List<>();
         boolean b = false;
         //Toast.makeText(this, " ", Toast.LENGTH_SHORT).show();
@@ -764,11 +858,71 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         ((Button)(findViewById(R.id.btn_save))).setEnabled(true);
         ((Button)(findViewById(R.id.btn_out))).setEnabled(true);
         if (((RadioButton)findViewById(R.id.rb_atp)).isChecked())
-            mode = RunMode.ATP;
+            mode = RunMode.MaxSpeed;
         else if (((RadioButton)findViewById(R.id.rb_max)).isChecked())
             mode = RunMode.MaxSpeed;
         else if (((RadioButton)findViewById(R.id.rb_slow)).isChecked())
             mode = RunMode.Express;
+        if (((EditText)findViewById(R.id.sw_no_before)).getText().toString().equals(""))
+            ((EditText)findViewById(R.id.sw_no_before)).setText("0");
+        if (((EditText)findViewById(R.id.sw_no_after)).getText().toString().equals(""))
+            ((EditText)findViewById(R.id.sw_no_after)).setText("0");
+        if (((EditText)findViewById(R.id.et_early_time)).getText().toString().equals(""))
+            ((EditText)findViewById(R.id.et_early_time)).setText("0");
+        if (((Switch)findViewById(R.id.sw_isAstar)).isChecked())
+        {
+            List<ListItem> liss;
+            int tmp1 = 0;
+            int tmp2 = 1;
+            int i = 0;
+            for (Station stat : Share.stations)
+            {
+                if (stat.name.equals(((EditText)findViewById(R.id.et_before)).getText().toString()))
+                    tmp1 = i;
+                if (stat.name.equals(((Button)findViewById(R.id.sp_after)).getText().toString()))
+                    tmp2 = i;
+                i++;
+            }
+            if (select)
+            {
+                liss = AStar(tmp2, tmp1, Integer.valueOf(((EditText)findViewById(R.id.sw_no_after)).getText().toString()), Integer.valueOf(((EditText)findViewById(R.id.sw_no_before)).getText().toString()), Integer.valueOf(((EditText)findViewById(R.id.et_early_time)).getText().toString()),
+                        mode
+                        ,((Switch)findViewById(R.id.sw_before_tst)).isChecked(),
+                        ((Switch)findViewById(R.id.sw_after_tst)).isChecked());
+            }
+            else
+            {
+                liss = AStar(tmp1, tmp2, Integer.valueOf(((EditText)findViewById(R.id.sw_no_before)).getText().toString()), Integer.valueOf(((EditText)findViewById(R.id.sw_no_after)).getText().toString()), Integer.valueOf(((EditText)findViewById(R.id.et_early_time)).getText().toString()),
+                        mode
+                        ,((Switch)findViewById(R.id.sw_before_tst)).isChecked(),
+                        ((Switch)findViewById(R.id.sw_after_tst)).isChecked());
+            }
+            if (liss.size() == 0)
+            {
+                //MessageBox.Show("未找到路径！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                return;
+            }
+            if (lis.size() == 0)
+                ((TextView)(findViewById(R.id.lv_stationbox))).setText(Share.stations.get(tmp1).name);
+            for (i = 0; i < liss.size(); i++)
+            {
+                lis.Add(liss.get(i));
+            }
+            ((Button)(findViewById(R.id.btn_add))).setEnabled(false);
+            Update();
+            SetTime();
+            ((EditText)findViewById(R.id.et_before)).setText(Share.stations.get(tmp2).name);
+            ((EditText)findViewById(R.id.et_before)).setEnabled(false);
+            ((Button)(findViewById(R.id.sp_after))).setEnabled(true);
+            ((Button)(findViewById(R.id.sp_after))).setText("");
+            ((EditText)(findViewById(R.id.sw_no_after))).setText("2");
+            ((EditText)(findViewById(R.id.et_early_time))).setText("5");
+            ((Switch)findViewById(R.id.sw_before_tst)).setChecked(((Switch)findViewById(R.id.sw_after_tst)).isChecked());
+            ((Switch)findViewById(R.id.sw_before_tst)).setEnabled(false);
+            ((Switch)findViewById(R.id.sw_after_tst)).setChecked(false);
+            ((RadioButton)findViewById(R.id.rb_slow)).setChecked(true);
+            return;
+        }
         if (select == true) {
             ListItem li = new ListItem(selectA,
                     Integer.valueOf(((EditText)findViewById(R.id.sw_no_after)).getText().toString()),
@@ -853,6 +1007,26 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                         public void onClick(DialogInterface dialog, int which) {  }
                     }).create().show();
         }
+        else if (requestCode == 3 && resultCode == Activity.RESULT_OK) {
+            /*new AlertDialog.Builder(this)
+                    .setTitle("是否手动设置列车信息？")
+                    .setPositiveButton("是", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                            SpwanLCD(data.getData().getPath().replace("/tree/primary:","/storage/emulated/0/"), true);
+                        }
+                    })
+                    .setNegativeButton("否", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                            SpwanLCD(data.getData().getPath().replace("/tree/primary:","/storage/emulated/0/"), false);
+                        }
+                    })
+                    .create().show();*/
+            SpwanLCD(data.getData().getPath().replace("/tree/primary:","/storage/emulated/0/"), false);
+        }
         else if(requestCode == 5 && resultCode == Activity.RESULT_OK) { //save
             String path = data.getData().getPath().replace("/tree/primary:","/storage/emulated/0/")
                     +java.io.File.separatorChar+((EditText)findViewById(R.id.et_trainNumber)).getText()
@@ -890,6 +1064,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             sb2.append(ver);
             sb2.append("\n");
             sb2.append(((Switch)findViewById(R.id.sw_double)).isChecked() ? "t" : "f");
+            sb2.append(" ");
+            sb2.append(((Switch)findViewById(R.id.sw_no350mode)).isChecked() ? "t" : "f");
             sb2.append("\n");
             sb2.append(((EditText)findViewById(R.id.et_trainNumber)).getText());
             //progressDialog2.setProgress(//progressDialog.getProgress() + 1);
@@ -952,7 +1128,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     String s = File.ReadAllText(data.getData().getPath().replace("/document/primary:", "/storage/emulated/0/"));
                     String[] str = s
                         .replace("\r", "").split("\n");
-                    String[] strs;
+                    String[] strs, sts;
                     int MAX_PROGRESS = str.length + 2;
                     //progressDialog //progressDialog =
                         //new //progressDialog(MainActivity.this);
@@ -969,6 +1145,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     for(int i = 0; i < rcps.length;i++) {
                         if(rcps[i].equals(str[0])) {
                             selectC = i;
+                            ((Button)findViewById(R.id.sp_rcp)).setText(rcps[i]);
                             break;
                         }
                         if (i == rcps.length - 1)
@@ -1007,14 +1184,29 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     }
                     else
                         ((Switch)(findViewById(R.id.sw_double))).setEnabled(true);
-                    if(str[5].equals("t"))
-                        ((Switch)findViewById(R.id.sw_double)).setChecked(true);
+                    sts = str[5].split(" ");
+                    if (sts.length == 2) {
+                        if(sts[0].equals("t"))
+                            ((Switch)findViewById(R.id.sw_double)).setChecked(true);
+                        else
+                            ((Switch)findViewById(R.id.sw_double)).setChecked(false);
+                        if(sts[1].equals("t"))
+                            ((Switch)findViewById(R.id.sw_no350mode)).setChecked(true);
+                        else
+                            ((Switch)findViewById(R.id.sw_no350mode)).setChecked(false);
+                    }
                     else
-                        ((Switch)findViewById(R.id.sw_double)).setChecked(false);
+                    {
+                        if(str[5].equals("t"))
+                            ((Switch)findViewById(R.id.sw_double)).setChecked(true);
+                        else
+                            ((Switch)findViewById(R.id.sw_double)).setChecked(false);
+                        ((Switch)findViewById(R.id.sw_no350mode)).setChecked(false);
+                    }
                     ((EditText)findViewById(R.id.et_trainNumber)).setText(str[6]);
                     for (int i = 7;i < str.length;i++) {
                         strs = str[i].split(" ");
-                        li = new ListItem(0,0,0,RunMode.ATP,0,0,0,false, false);
+                        li = new ListItem(0,0,0,RunMode.MaxSpeed,0,0,0,false, false);
                         b7 = false;
                         for (int j = 0; j < Share.stations.size();j++) {
                         if(Share.stations.get(j).name.equals(strs[0])) {
@@ -1079,7 +1271,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                         li.earlytime = Integer.valueOf(strs[7]);
                         switch (strs[8]) {
                             case "a":
-                                li.mode = RunMode.ATP;
+                                li.mode = RunMode.MaxSpeed;
                                 break;
                             case "m":
                                 li.mode = RunMode.MaxSpeed;
@@ -1144,6 +1336,19 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         tmp3 = hourOfDay < 10 ? "0" + Integer.toString(hourOfDay) : Integer.toString(hourOfDay);
         sb.append(tmp3);
         sb.append(":");
+        sb.append(tmp1);
+        return sb.toString();
+    }
+    public String ToLCDTime(int min) {
+        String tmp1, tmp3;
+        StringBuilder sb = new StringBuilder();
+        int minute, hourOfDay;
+        minute = min % 60;
+        hourOfDay = min / 60;
+        hourOfDay = hourOfDay % 24;
+        tmp1 = minute < 10 ? "0" + Integer.toString(minute) : Integer.toString(minute);
+        tmp3 = hourOfDay < 10 ? "0" + Integer.toString(hourOfDay) : Integer.toString(hourOfDay);
+        sb.append(tmp3);
         sb.append(tmp1);
         return sb.toString();
     }
@@ -1325,8 +1530,19 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     public void OutFile(View view) {
         if (!Environment.isExternalStorageManager())
             return;
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        startActivityForResult(intent, 1);
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        new AlertDialog.Builder(this)
+                .setTitle("请选择导出格式")
+                .setSingleChoiceItems(new String[] {"bll文件", "车内PIDS文件"}, 0, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        if (which == 0)
+                            startActivityForResult(intent, 1);
+                        else if(which == 1)
+                            startActivityForResult(intent, 3);
+                    }
+                }).create().show();
     }
     public void ChangeRailC(View view) {
         int tmp2 = 0;
@@ -1374,8 +1590,10 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 break;
             }
         }
-        if(up)
+        if(up) {
             lis = this.lis;
+            uptimes.clear();
+        }
         else {
             ListItem tmp4;
             for (int i = this.lis.size() - 1;i >= 0;i--) {
@@ -1395,6 +1613,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 tmp4.beforeteg = tmp4.afterteg;
                 tmp4.afterteg = t6;*/
             }
+            downtimes.clear();
         }
         ast = e2.ast;
         speed = e2.speed;
@@ -1567,7 +1786,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                         _speed = Integer.valueOf(spd.get(k).substring(3));
                                     else if (spd.get(k).startsWith("ms") && (lis.get(i).mode != RunMode.Express) && (b2 != true))
                                         _speed = Integer.valueOf(spd.get(k).substring(3));
-                                    else if (spd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.ATP)) {
+                                    else if (spd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.MaxSpeed)) {
                                         _speed = Integer.valueOf(spd.get(k).substring(4));
                                         b2 = true;
                                     }
@@ -1586,7 +1805,10 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                             _speed = speed - 10;
                                             break;
                                     }
-                                }//找到下条线路限速
+                                }
+                                if ((((Switch)findViewById(R.id.sw_no350mode)).isChecked()) && (_speed > 310))
+                                    _speed = 305;
+                                //找到下条线路限速
                                 /*if (i < lis.size() - 1) {
                                     if (lis.get(i).afterstop == 0) {
                                         c1 = false;
@@ -1669,7 +1891,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                                                 if((lis.get(i).mode != RunMode.Express))
                                                                     aspeed = Integer.valueOf(tpd.get(k).substring(3));
                                                             }
-                                                            else if (tpd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.ATP)) {
+                                                            else if (tpd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.MaxSpeed)) {
                                                                 aspeed = Integer.valueOf(tpd.get(k).substring(4));
                                                                 c4 = true;
                                                             }
@@ -1792,7 +2014,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                         else if((lis.get(i).mode != RunMode.Express))
                                             _speed = Integer.valueOf(spd.get(k).substring(3));
                                     }
-                                    else if (spd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.ATP)) {
+                                    else if (spd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.MaxSpeed)) {
                                         b4 = true;
                                         if (b2) {
                                             aspeed = Integer.valueOf(spd.get(k).substring(4));
@@ -1801,7 +2023,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                         else
                                             _speed = Integer.valueOf(spd.get(k).substring(4));
                                     }
-                                    /*else if (lis.get(i).mode == RunMode.ATP) {
+                                    /*else if (lis.get(i).mode == RunMode.MaxSpeed) {
                                         if (b2)
                                             break;
                                     }*/
@@ -1822,6 +2044,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                             break;
                                     }
                                 }
+                                if ((((Switch)findViewById(R.id.sw_no350mode)).isChecked()) && (_speed > 310))
+                                    _speed = 305;
                                 min += Calc(length, ast, bspeed, aspeed, _speed, 0);
                                 bspeed = _speed;
                                 if (aspeed == 0) bspeed = 0;
@@ -1909,32 +2133,1327 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         finish();
         startActivity(intent);
     }
-
-    public enum RunMode {
-        ATP,
-        MaxSpeed,
-        Express
+    public List<ListItem> AStar(int start, int end, int bstop, int astop, int delay, RunMode rm, boolean bteg, boolean ateg) {
+        List<ListItem> liss = new List<ListItem>();
+        dfsis = new List<List<DFSItem>>();
+        List<ListItem> r = new List<ListItem>();
+        //bool[,,] fake = new bool[Share.stations.size(), Share.rails.size(), Share.stations.size()];
+        visit = new List<int[]>();
+        int tmp1 = -1;
+        int tmp2 = -1;
+        int tmp3 = -1;
+        num = 0;
+        List<Integer> sns = new List<Integer>();
+        List<Double> pos = new List<Double>();
+        List<Integer> lin = new List<Integer>();
+        List<Integer> lin2 = new List<Integer>();
+        boolean b = false;
+        boolean bIsSmall = false;
+        boolean b1 = false;
+        boolean b2 = false;
+        boolean isstovf = false;
+        tmp1 = -1;
+        tmp2 = -1;
+        double sortmp1 = -1;
+        int sortmp2 = -1;
+        boolean zc;
+        int i;
+        int j;
+        int k;
+        it = new List<DFSItem>();
+        try {
+            lng = -1;
+            lat = -1;
+            for (Rail item : Share.rails) {
+                for (int i2 = 0; i2 < item.locations.length(); i2++) {
+                    if ((!(item.locations.getJSONObject(i2).getString("name")).toLowerCase().startsWith("x")) && ((item.locations.getJSONObject(i2).getString("type")).equals("station"))) {
+                        if (((String) item.locations.getJSONObject(i2).getString("name")).toLowerCase().equals(Share.stations.get(end).name)) {
+                            lat = item.locations.getJSONObject(i2).getDouble("lat");
+                            lng = item.locations.getJSONObject(i2).getDouble("lng");
+                            break;
+                        }
+                    }
+                }
+                if (lng != -1)
+                    break;
+            }
+            //GC.Collect();
+            /*for (int i = 0; i < Share.stations.size(); i++)
+                for (int j = 0; j < Share.rails.size(); j++)
+                    for (int k = 0; k < Share.stations.size(); k++)
+                        visit[i, j, k] = true;
+            for (int i = 0; i < Share.stations.size(); i++)
+                for (int j = 0; j < Share.rails.size(); j++)
+                    for (int k = 0; k < Share.stations.size(); k++)
+                        visit[i, j, k] = false;*/
+            astar(start, end, 1);
+            if (Integer.valueOf(num) > Integer.valueOf(Share.settings.GetE("asnr"))) {
+                new AlertDialog.Builder(this)
+                        .setTitle("错误")
+                        .setMessage("路径过于复杂！")
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {  }
+                        }).create().show();
+                return new List<ListItem>();
+            }
+            tmp1 = -1;
+            tmp2 = -1;
+            tmp3 = -1;
+            for (i = 0; i < dfsis.get(0).size(); i++) {
+                if (dfsis.get(0).get(i).line == tmp2)
+                    liss.get(liss.size() - 1).after = dfsis.get(0).get(i).before;
+                else if (i > 0) {
+                    if (dfsis.get(0).get(i - 1).line == tmp2)
+                        liss.get(liss.size() - 1).after = dfsis.get(0).get(i).before;
+                }
+                if ((dfsis.get(0).get(i).line > -1) && (dfsis.get(0).get(i).line != tmp2))
+                    liss.Add(new ListItem(dfsis.get(0).get(i).before, 0, dfsis.get(0).get(i).line, rm, dfsis.get(0).get(i + 1).before, 0, 0, false, false));
+                tmp2 = dfsis.get(0).get(i).line;
+            }
+            /*for (int i = 0; i < liss.size(); i++)
+            {
+                if (tmp1 == -1)
+                {
+                    tmp1 = liss[i].before;
+                    tmp2 = liss[i].line;
+                }
+                if (liss[i].line == tmp2)
+                {
+                    tmp3 = liss[i].after;
+                }
+                else
+                {
+                    r.Add(new ListItem(tmp1, 0, tmp2, rm, tmp3, 0, 0, false, false));
+                    tmp1 = -1;
+                    tmp2 = -1;
+                }
+                if((liss[i].line == tmp2) && (i + 1 >= liss.size()))
+                    r.Add(new ListItem(tmp1, 0, tmp2, rm, tmp3, 0, delay, false, ateg));
+                else if(i + 1 >= liss.size())
+                    r.Add(new ListItem(liss[i].before, 0, liss[i].line, rm, liss[i].after, 0, delay, false, ateg));
+                if (tmp1 == -1)
+                {
+                    tmp1 = liss[i].before;
+                    tmp2 = liss[i].line;
+                }
+            }*/
+            r = liss;
+            //r.Add(new ListItem(tmp1, 0, tmp2, rm, tmp3, 0, delay, false, ateg));
+            r.get(0).beforestop = bstop;
+            r.get(0).beforeteg = bteg;
+            r.get(r.size() - 1).afterstop = astop;
+            r.get(r.size() - 1).earlytime = delay;
+            r.get(r.size() - 1).afterteg = ateg;
+            for (i = 0; i < r.size(); i++)
+            {
+                if (r.get(i).before == r.get(i).after)
+                {
+                    r.get(i + 1).beforestop = r.get(i).beforestop;
+                    r.remove(i);
+                    i = 0;
+                }
+            }
+        }
+        catch (Exception e){   }
+        return r;
     }
-    public static class ListItem {
-        public int before;
-        public int after;
-        public int line;
-        public int beforestop;
-        public int afterstop;
-        public int earlytime;
-        public RunMode mode;
-        public boolean beforeteg;
-        public boolean afterteg;
-        public ListItem(int before, int beforestop, int line, RunMode mode, int after, int afterstop, int earlytime, boolean beforeteg, boolean afterteg) {
-            this.before = before;
-            this.line = line;
-            this.after = after;
-            this.mode = mode;
-            this.beforestop = beforestop;
-            this.afterstop = afterstop;
-            this.earlytime = earlytime;
-            this.beforeteg = beforeteg;
-            this.afterteg = afterteg;
+    public void astar(int st, int nd, int th) {
+        int tmp1 = -1;
+        int tmp2 = -1;
+        int tmp3 = -1;
+        List<Integer> sns = new List<Integer>();
+        List<Double> pos = new List<Double>();
+        List<Integer> lin = new List<Integer>();
+        List<Integer> lin2 = new List<Integer>();
+        boolean b = false;
+        boolean bIsSmall = false;
+        boolean b1 = false;
+        boolean b2 = false;
+        boolean isstovf = false;
+        tmp1 = -1;
+        tmp2 = -1;
+        double sortmp1 = -1;
+        int sortmp2 = -1;
+        boolean zc;
+        int i;
+        int j;
+        int k;
+        try
+        {
+            it.Add(new DFSItem(st, -1));
+            if (Integer.valueOf(num) > Integer.valueOf(Share.settings.GetE("asnr")))
+                return;
+            num++;
+            if (st == nd)
+            {
+                dfsis.Add(it);
+            }
+            else
+            {
+                sns = new List<Integer>();
+                pos = new List<Double>();
+                lin = new List<Integer>();
+                lin2 = new List<Integer>();
+                b = false;
+                bIsSmall = false;
+                b1 = false;
+                b2 = false;
+                tmp1 = -1;
+                tmp2 = -1;
+                sortmp1 = -1;
+                sortmp2 = -1;
+                for (i = 0; i < ssns.size(); i++)
+                {
+                    if (ssns.get(i) == it.get(it.size() - 1).before)
+                    {
+                        bIsSmall = true;
+                        zc = false;
+                        for (j = 0; j < sss.get(i).size(); j++)
+                        {
+                            for (k = 0; k < sss.get(i).get(j).size(); k++)
+                            {
+                                if ((it.size() < 2) && (lis.size() == 0))
+                                {
+                                    b1 = true;
+                                    break;
+                                }
+                                else if ((it.size() > 2) && (zc == false))
+                                {
+                                    if ((sss.get(i).get(j).get(k) == it.get(it.size() - 2).line))
+                                    {
+                                        zc = true;
+                                        b = true;
+                                        k = 0;
+                                    }
+                                }
+                                else if ((zc == false) && (it.size() < 2))
+                                {
+                                    if (sss.get(i).get(j).get(k) == lis.get(lis.size() - 1).line)
+                                    {
+                                        zc = true;
+                                        b = true;
+                                        k = 0;
+                                    }
+                                }
+                                if (zc)
+                                    sns.Add(sss.get(i).get(j).get(k));
+                            }
+                            if (b1)
+                                break;
+                            zc = false;
+                        }
+                        break;
+                    }
+                }
+                if (bIsSmall == false)
+                    sns = Share.stations.get(it.get(it.size() - 1).before).rails;
+                for (int item : sns)
+                {
+                    tmp1 = -1;
+                    for (i = 0; i < Share.rails.get(item).stations.size(); i++)
+                    {
+                        if (Share.rails.get(item).stations.get(i).equals(Share.stations.get(st).name))
+                        {
+                            tmp1 = i;
+                            break;
+                        }
+                    }
+                    if (tmp1 > 0)
+                    {
+                        for (i = 0; i < Share.rails.get(item).locations.length(); i++)
+                        {
+                            if (((String)(Share.rails.get(item).locations.getJSONObject(i).getString("name"))).equals(Share.rails.get(item).stations.get(tmp1 - 1)))
+                            {
+                                pos.Add(GetLength(lng, lat, ((double)(Share.rails.get(item).locations.getJSONObject(i).getDouble("lng"))), ((double)(Share.rails.get(item).locations.getJSONObject(i).getDouble("lat")))));
+                                lin2.Add(item);
+                                for (j = 0; j < Share.stations.size(); j++)
+                                {
+                                    for (tmp2 = 1; tmp2 < Share.rails.get(item).stations.size(); tmp2++)
+                                    {
+                                        //GC.Collect();
+                                        if (!Share.rails.get(item).stations.get(tmp1 - tmp2).toLowerCase().startsWith("x"))
+                                            break;
+                                    }
+                                    if (Share.stations.get(j).name.equals(Share.rails.get(item).stations.get(tmp1 - tmp2)))
+                                    {
+                                        lin.Add(j);
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    if (tmp1 + 1 < Share.rails.get(item).stations.size())
+                    {
+                        for (i = 0; i < Share.rails.get(item).locations.length(); i++)
+                        {
+                            if (((String)(Share.rails.get(item).locations.getJSONObject(i).getString("name"))).equals(Share.rails.get(item).stations.get(tmp1 + 1)))
+                            {
+                                pos.Add(GetLength(lng, lat, ((double)(Share.rails.get(item).locations.getJSONObject(i).getDouble("lng"))), ((double)(Share.rails.get(item).locations.getJSONObject(i).getDouble("lat")))));
+                                lin2.Add(item);
+                                for (j = 0; j < Share.stations.size(); j++)
+                                {
+                                    for (tmp2 = 1; tmp2 < Share.rails.get(item).stations.size(); tmp2++)
+                                    {
+                                        //GC.Collect();
+                                        if (!Share.rails.get(item).stations.get(tmp1 + tmp2).toLowerCase().startsWith("x"))
+                                            break;
+                                    }
+                                    if (Share.stations.get(j).name.equals(Share.rails.get(item).stations.get(tmp1 + tmp2)))
+                                    {
+                                        lin.Add(j);
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                for (i = 0; i < pos.size() - 1; i++)
+                {
+                    for (j = 0; j < pos.size() - 1 - i; j++)
+                    {
+                        if (pos.get(j) > pos.get(j+1))
+                        {
+                            sortmp1 = pos.get(j);
+                            pos.set(j,pos.get(j+1));
+                            pos.set(j+1,sortmp1);
+                            sortmp2 = lin.get(j);
+                            lin.set(j,lin.get(j+1));
+                            lin.set((j+1),sortmp2);
+                            sortmp2 = lin2.get(j);
+                            lin2.set(j,lin2.get(j+1));
+                            lin2.set(j+1,sortmp2);
+                        }
+                    }
+                }
+                if (lin.size() == 0)
+                {
+                    it.remove(it.size() - 1);
+                    astar(it.get(it.size() - 1).before, nd, th);
+                    if (num > Share.stations.size() * 2)
+                        return;
+                    if (num > 400)
+                        return;
+                }
+                else if (th - 1 < pos.size())
+                {
+                    it.get(it.size() - 1).line = lin2.get(th - 1);
+                    //String str = Share.stations[lin.get(th - 1)].name;
+                    for (int[] item : visit)
+                    {
+                        if (((item[0] == st) && (item[1] == lin2.get(lin2.size() - 1)) && (item[2] == lin.get(th - 1))) ||
+                                ((item[2] == st) && (item[1] == lin2.get(lin2.size() - 1)) && (item[0] == lin.get(th - 1))))
+                        {
+                            for (i = 1; i < pos.size(); i++)
+                            {
+                                if (th - 1 + i < pos.size())
+                                {
+                                    b2 = false;
+                                    for (int[] item2 : visit)
+                                    {
+                                        b2 = b2 || (((item2[0] == st) && (item2[1] == lin2.get(lin2.size() - 1)) && (item2[2] == lin.get(th - 1 + i))) ||
+                                                ((item2[2] == st) && (item2[1] == lin2.get(lin2.size() - 1)) && (item2[0] == lin.get(th - 1 + i))));
+                                    }
+                                    if (!b2)
+                                    {
+                                        it.get(it.size() - 1).line = lin2.get(th - 1 + i);
+                                        visit.Add(new int[]{ st, lin2.get(th - 1 + i), lin.get(th - 1 + i) });
+                                        //visit[st, lin2.get(th - 1 + i), lin.get(th - 1 + i)] = true;
+                                        //visit[lin.get(th - 1 + i), lin2.get(th - 1 + i), st] = true;
+                                        //GC.Collect();
+                                        astar(lin.get(th - 1 + i), nd, th);
+                                        return;
+                                    }
+                                }
+                                else
+                                {
+                                    it.remove(it.size() - 1);
+                                    //GC.Collect();
+                                    astar(it.get(it.size() - 1).before, nd, th);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    visit.Add(new int[] { st, lin2.get(th - 1), lin.get(th - 1) });
+                    //visit[lin.get(th - 1), lin2.get(th - 1), st] = true;
+                    astar(lin.get(th - 1), nd, th);
+                    if (num > Share.stations.size() * 2)
+                        return;
+                    if (num > 400)
+                        return;
+                }
+                else
+                {
+                    it.get(it.size() - 1).line = lin2.get(lin2.size() - 1);
+                    //String str = Share.stations[lin[lin.size() - 1]].name;
+                    //|| visit[lin[lin.size() - 1], lin2[lin2.size() - 1], st]
+                    for (int[] item : visit)
+                    {
+                        if (((item[0] == st) && (item[1] == lin2.get(lin2.size() - 1)) && (item[2] == lin.get(lin.size() - 1))) ||
+                                ((item[2] == st) && (item[1] == lin2.get(lin2.size() - 1)) && (item[0] == lin.get(lin.size() - 1))))
+                        {
+                            it.remove(it.size() - 1);
+                            astar(it.get(it.size() - 1).before, nd, th);
+                            return;
+                        }
+                    }
+                    visit.Add(new int[]{ st, lin2.get(lin2.size() - 1), lin.get(lin.size() - 1) });
+                    //visit[lin[lin.size() - 1], lin2[lin2.size() - 1], st] = true;
+                    astar(lin.get(lin.size() - 1), nd, th);
+                    if (num > Share.stations.size() * 2)
+                        return;
+                    if (num > 400)
+                        return;
+                }
+            }
+        }
+        catch (Exception e){  }
+    }
+    public void SpwanLCD(String path, boolean showdeley) {
+        try
+        {
+            Color line_c;
+            EMU e2 = null;
+            boolean isSelect1 = false;
+            int sn = 0;
+            String cpy = ((Button)findViewById(R.id.sp_rcp)).getText().toString();
+            String tra = train;
+            String[] dats;
+            String tn = ((EditText)findViewById(R.id.et_trainNumber)).getText().toString().split(" ")[0];
+            List<PIDSInfo> stats = new List<PIDSInfo>();
+            final StringBuilder baseData = new StringBuilder();
+            JSONArray jArray;
+            String tmp114;
+            AtomicBoolean isget = new AtomicBoolean(false);
+            Handler h = null;
+            for (EMU e : Share.emus)
+            {
+                if (e.name.equals(train))
+                {
+                    e2 = e;
+                    break;
+                }
+            }
+            if (e2.speed > 310)
+                line_c = Color.valueOf(Color.argb(255, 204, 0, 0));
+            else if (e2.speed > 290)
+                line_c = Color.valueOf(Color.argb(255, 255, 51, 0));
+            else if (e2.speed > 230)
+                line_c = Color.valueOf(Color.argb(255, 255, 102, 0));
+            else if (e2.speed > 190)
+                line_c = Color.valueOf(Color.argb(255, 255, 153, 0));
+            else if (e2.speed > 150)
+                line_c = Color.valueOf(Color.argb(255, 203, 203, 0));
+            else
+                line_c = Color.valueOf(Color.argb(255, 51, 204, 51));
+            for (int j = 0; j < lis.size(); j++)
+            {
+                isSelect1 = false;
+                jArray = Share.rails.get(lis.get(j).line).locations;
+                for (int k = 0; k < jArray.length(); k++) {
+                    if ((jArray.getJSONObject(k).getString("name")).equals(Share.stations.get(lis.get(j).after).name))
+                    {
+                        if (!isSelect1)
+                        {
+                            jArray = new JSONArray();
+                            for (int l = Share.rails.get(lis.get(j).line).locations.length() - 1; l >= 0; l--)
+                            {
+                                jArray.put(Share.rails.get(lis.get(j).line).locations.getJSONObject(l));
+                            }
+                            k = -1;
+                            isSelect1 = false;
+                            continue;
+                        }
+                        else
+                        {
+                            if((!Share.stations.get(lis.get(j).after).name.toLowerCase().startsWith("x")) && (!Share.stations.get(lis.get(j).after).name.toLowerCase().endsWith("线路所")))
+                                baseData.append(Share.stations.get(lis.get(j).after).name);
+                            if (lis.get(j).afterstop > 0)
+                            {
+                                baseData.append('|');
+                                baseData.append(((uptimes.get(sn).arriveTime == -1) ? ToLCDTime(uptimes.get(sn).deparTime) : ToLCDTime(uptimes.get(sn).arriveTime)));
+                                baseData.append(':');
+                                if (showdeley)
+                                {
+                                    isget.set(false);
+                                    EditText et = new EditText(this);
+                                    et.setInputType(((EditText)findViewById(R.id.sw_no_after)).getInputType());
+                                    new AlertDialog.Builder(this)
+                                            .setTitle("请输入\"" + Share.stations.get(lis.get(j).after).name + "\"站的正晚点信息\\r\\n早点为负，正点为0，晚点为正")
+                                            .setView(et)
+                                            .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    if (et.getText().toString().equals(""))
+                                                        et.setText("0");
+                                                    baseData.append(et.getText().toString());
+                                                    dialog.cancel();
+                                                    isget.set(true);
+                                                }
+                                            })
+                                            .create().show();
+                                }
+                                else
+                                {
+                                    baseData.append('0');
+                                }
+                                sn++;
+                            }
+                            if (j + 1 < jArray.length())
+                                baseData.append(',');
+                            break;
+                        }
+                    }
+                    if (isSelect1 && ((jArray.getJSONObject(k).getString("type")).equals("station")))
+                    {
+                        if ((!(jArray.getJSONObject(k).getString("name")).toLowerCase().contains("x")) && (!(jArray.getJSONObject(k).getString("name")).contains("线路所")))
+                            baseData.append((jArray.getJSONObject(k).getString("name")));
+                        if (j + 1 < jArray.length())
+                            baseData.append(',');
+                    }
+                    if ((jArray.getJSONObject(k).getString("name")).equals(Share.stations.get(lis.get(j).before).name))
+                    {
+                        isSelect1 = true;
+                        if (j == 0)
+                        {
+                            baseData.append(Share.stations.get(lis.get(j).before).name);
+                            if (lis.get(j).beforestop > 0)
+                            {
+                                baseData.append('|');
+                                baseData.append(((uptimes.get(sn).arriveTime == -1) ? ToLCDTime(uptimes.get(sn).deparTime) : ToLCDTime(uptimes.get(sn).arriveTime)));
+                                baseData.append(':');
+                                if (showdeley)
+                                {
+                                    isget.set(false);
+                                    EditText et = new EditText(this);
+                                    et.setInputType(((EditText)findViewById(R.id.sw_no_after)).getInputType());
+                                    new AlertDialog.Builder(this)
+                                            .setTitle("请输入\"" + Share.stations.get(lis.get(j).before).name + "\"站的正晚点信息\\r\\n早点为负，正点为0，晚点为正")
+                                            .setView(et)
+                                            .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    if (et.getText().toString().equals(""))
+                                                        et.setText("0");
+                                                    baseData.append(et.getText().toString());
+                                                    dialog.cancel();
+                                                    isget.set(true);
+                                                }
+                                            })
+                                            .create().show();
+                                }
+                                else
+                                {
+                                    baseData.append('0');
+                                }
+                                sn++;
+                            }
+                            if (j + 1 < jArray.length())
+                                baseData.append(',');
+                        }
+                    }
+                }
+            }
+            if (showdeley) {
+                tra = tra + "-";
+                isget.set(false);
+                EditText et = new EditText(this);
+                et.setInputType(((EditText)findViewById(R.id.sw_no_after)).getInputType());
+                new AlertDialog.Builder(this)
+                        .setTitle("请输入列车编号")
+                        .setView(et)
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (et.getText().toString().equals(""))
+                                    et.setText("5033");
+                                dialog.cancel();
+                                isget.set(true);
+                            }
+                        })
+                        .create().show();
+                tra = tra + (et.getText().toString());
+                if(((Switch)findViewById(R.id.sw_double)).isChecked())
+                {
+                    tra = tra + "&";
+                    tra = tra + train;
+                    tra = tra + "-";
+                    isget.set(false);
+                    EditText et2 = new EditText(this);
+                    et.setInputType(((EditText)findViewById(R.id.sw_no_after)).getInputType());
+                    new AlertDialog.Builder(this)
+                            .setTitle("请输入列车编号")
+                            .setView(et)
+                            .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (et2.getText().toString().equals(""))
+                                        et2.setText("5033");
+                                    dialog.cancel();
+                                    isget.set(true);
+                                }
+                            })
+                            .create().show();
+                    tra = tra + (et2.getText().toString());
+                }
+            }
+            tmp114 = baseData.toString();
+            baseData.delete(0, baseData.length() - 1);
+            while (tmp114.contains(",,"))
+            {
+                tmp114 = tmp114.replace(",,", ",");
+            }
+            for (String item : tmp114.split(","))
+            {
+                if(item.equals(""))
+                    continue;
+                stats.Add(new PIDSInfo(item));
+            }
+                /*string tmp = "";
+                foreach (Station stat in stats)
+                {
+                    tmp+=(stat.name);
+                    tmp += ", ";
+                }
+                MessageBox.Show(tmp);*/
+            StringBuilder sb = new StringBuilder();
+            StringBuilder sbd = new StringBuilder();
+            StringBuilder sbb = new StringBuilder();
+            int i = 0;
+            long lcdNum = 1;
+            int t = 0, t3 = 0;
+            boolean t2, t4 = false;
+            List<String> stations = new List<String>();
+            Bitmap bmp = null;
+            Graphics g = null;
+            Pen afterpen = new Pen(line_c, 20.0f);
+            Pen nullpen = new Pen(new SolidBrush(line_c));
+            Pen backpen = new Pen(new SolidBrush(Color.valueOf(Color.WHITE)));
+            Pen beforepen = new Pen(Color.valueOf(Color.argb(255, 153, 153, 153)), 20.0f);
+            Pen astpen = new Pen(line_c, 10.0f);
+            Pen bstpen = new Pen(Color.valueOf(Color.argb(255, 153, 153, 153)), 10.0f);
+            for (PIDSInfo stat : stats)
+            {
+                //start x95 y170;end x3750 y170
+                bmp = Bitmap.createBitmap(3840, 360, Bitmap.Config.ARGB_8888);
+                g = Graphics.FromImage(bmp);
+                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(0, 0), new Size(bmp.getWidth(), bmp.getHeight())));
+                g.FillRectangle(new SolidBrush(line_c), new Rectangle(new Point(0, 0), new Size(bmp.getWidth(), 90)));
+                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(1280, 18), new Size(27 * 2, 27 * 2)));
+                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(2505, 18), new Size(27 * 2, 27 * 2)));
+                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(1307, 18), new Size(2532 - 1307, 27 * 2)));
+                sb = new StringBuilder();
+                //车次：G6591/4    揭阳→广州东     本站：广州东       终点站：广州东
+                sb.append("车次：");
+                sb.append(tn);
+                sb.append("    ");
+                sb.append(stats.get(0).name);
+                sb.append("→");
+                sb.append(stats.get(stats.size() - 1).name);
+                sb.append("     本站：");
+                if (stat.isStop)
+                    sb.append(stat.name);
+                else
+                    sb.append("      ");
+                if (i == stats.size() - 1)
+                    sb.append("       终点站");
+                else
+                    sb.append("       下一站：");
+                for (int j = i + 1; j < stats.size(); j++)
+                {
+                    if (stats.get(j).isStop)
+                    {
+                        sb.append(stats.get(j).name);
+                        break;
+                    }
+                }
+                t = 0;
+                for (int l = 0; l < sb.length(); l++)
+                {
+                    if (sb.charAt(l) == ' ')
+                        t++;
+                }
+                if ((((sb.length() - (t / 4.0)) * 15)) > ((2532 - 1307) / 2.0))
+                {
+                    g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(1920 - (((sb.length() - (t / 4)) * 15)) - 27, 18), new Size(27 * 2, 27 * 2)));
+                    g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(1920 + (((sb.length() - (t / 4)) * 15)) - 27, 18), new Size(27 * 2, 27 * 2)));
+                    g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(1920 - (((sb.length() - (t / 4)) * 15)), 18), new Size((((sb.length() - (t / 4)) * 15)) * 2, 27 * 2)));
+                }
+                g.DrawString(sb.toString(), new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF(1900.0f - ((sb.length() - (t / 4.0f)) * 20), 10.5f));
+                //担当企业 x=655
+                sbd = new StringBuilder();
+                sbd.append("担当企业：");
+                sbd.append(cpy);
+                g.DrawString(sbd.toString(), new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.WHITE)), new PointF(655.0f - (sbd.length() * 20.0f), 10.5f));
+                //本务 x=3070
+                sbb = new StringBuilder();
+                sbb.append("本务：");
+                sbb.append(tra.toUpperCase());
+                g.DrawString(sbb.toString(), new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.WHITE)), new PointF(3070.0f - (sbb.length() * 20.0f), 10.5f));
+                if ((i + 26 >= stats.size() - 1) && (i - 26 <= 0)) {
+                    g.DrawLine(afterpen, new Point(95, 215), new Point(3750, 215));
+                    stations.clear();
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        stations.Add(stat2.name);
+                    }
+                    if (stations.indexOf(stat.name) > 0)
+                        g.DrawLine(beforepen, new Point(95, 215), new Point((3655 / (stats.size() - 1) * (stations.indexOf(stat.name))) + 95, 215));
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (stat2.name.equals(stat.name))
+                            break;
+                        if (stat2.isStop)
+                        {
+                            g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                            g.DrawEllipse(bstpen, new Rectangle(new Point((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                        }
+                        else
+                        {
+                            g.DrawEllipse(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45, 13, 13);//左上
+                            g.DrawEllipse(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 + 26, 150 + 45, 13, 13);//右上
+                            g.DrawEllipse(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 + 26, 173 + 45, 13, 13);//右下
+                            g.DrawEllipse(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 173 + 45, 13, 13);//左下
+                            g.DrawLine(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45 + 6, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45 + 6 + 26);
+                            g.DrawLine(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 0 + 45, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                            g.DrawLine(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                            g.DrawLine(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                            g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                        }
+                        if (stat2.isStop)
+                        {
+                            g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95.0f - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                            g.DrawString(stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95.0f - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                        }
+                    }
+                    t2 = false;
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (stat2.name.equals(stat.name))
+                            t2 = true;
+                        if (t2)
+                        {
+                            if (stat2.isStop)
+                            {
+                                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                                g.DrawEllipse(astpen, new Rectangle(new Point((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                            }
+                            else
+                            {
+                                g.DrawEllipse(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45, 13, 13);//左上
+                                g.DrawEllipse(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 + 26, 150 + 45, 13, 13);//右上
+                                g.DrawEllipse(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 + 26, 173 + 45, 13, 13);//右下
+                                g.DrawEllipse(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 173 + 45, 13, 13);//左下
+                                g.DrawLine(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45 + 6, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45 + 6 + 26);
+                                g.DrawLine(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 0 + 45, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                                g.DrawLine(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                                g.DrawLine(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                            }
+                            if (stat2.isStop)
+                            {
+                                g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95.0f - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                                if (stat2.delayTime > 0)
+                                    g.DrawString("+" + Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.RED)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95.0f - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                                else if (stat2.delayTime == 0)
+                                    g.DrawString(Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95.0f - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                                else if (stat2.delayTime < 0)
+                                    g.DrawString(Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.argb(255,0,100,0))), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95.0f - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                            }
+                            g.DrawString("》》》", new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.WHITE)), 3655.0f / (stats.size() - 1) * (stations.indexOf(stat2.name)) + (3655.0f / (stats.size() - 1) / 2.0f) + 70.0f, 170 + 45 - 10);
+                        }
+                    }
+                    for (int k = 0; k < stats.size(); k++)
+                    {
+                        g.DrawString(stats.get(k).name, new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stats.get(k).name))) + 95.0f - ((stats.get(k).name.length() / 2.0f * 58.0f)), ((k % 2) == 0) ? 115.0f : 240.0f));
+                    }
+                }
+                else if (i >= stats.size() - 1) {
+                    g.DrawLine(afterpen, new Point(0, 215), new Point(3750, 215));
+                    g.DrawLine(beforepen, new Point(0, 215), new Point((3655 / 25 * (24)) + 95, 215));
+                    t3 = 0;
+                    t4 = false;
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (t3 == 25)
+                            break;
+                        if (stat2.name.equals(stats.get(i - 25).name))
+                            t4 = true;
+                        if (t4)
+                        {
+                            if (stat2.isStop)
+                            {
+                                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (t3)) + 95 - 27, 188), new Size(54, 54)));
+                                g.DrawEllipse(bstpen, new Rectangle(new Point((3655 / 25 * ((t3))) + 95 - 27, 188), new Size(54, 54)));
+                                g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (t3)) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                                g.DrawString(stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (t3)) + 95 - 7.5f, 170.0f + 42.0f));
+                            }
+                            else
+                            {
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3) + 95 - 26, 150 + 45, 13, 13);//左上
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3) + 95 + 26, 150 + 45, 13, 13);//右上
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3) + 95 + 26, 173 + 45, 13, 13);//右下
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3) + 95 - 26, 173 + 45, 13, 13);//左下
+                                g.DrawLine(bstpen, 3655 / 25 * (t3) + 95 - 26, 150 + 45 + 6, 3655 / 25 * (t3) + 95 - 26, 150 + 45 + 6 + 26);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3) + 95 - 26 + 6, 150 + 0 + 45, 3655 / 25 * (t3) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / 25 * (t3) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / 25 * (t3) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / 25 * (t3) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                            }
+                        }
+                        if (t4)
+                            t3++;
+                    }
+                    g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (25)) + 95 - 27, 188), new Size(54, 54)));
+                    g.DrawEllipse(astpen, new Rectangle(new Point((3655 / 25 * (25)) + 95 - 27, 188), new Size(54, 54)));
+                    if (stat.isStop)
+                    {
+                        g.DrawString(stat.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * 25) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                        if (stat.delayTime > 0)
+                            g.DrawString("+" + Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.RED)), new PointF((3655 / 25 * (t3)) + 95 - 7.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                        else if (stat.delayTime == 0)
+                            g.DrawString(Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (t3)) + 95 - 7.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                        else if (stat.delayTime < 0)
+                            g.DrawString(Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.argb(255,0,100,0))), new PointF((3655 / 25 * (t3)) + 95 - 7.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                        g.DrawString("》》》", new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.WHITE)), 3655.0f + (3655.0f / (stats.size() - 1) / 2.0f) - 17.5f, 170 + 45 - 10);
+                    }
+                    for (int k = i - 25; k < stats.size(); k++)
+                    {
+                        g.DrawString(stats.get(k).name, new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (k - (i - 25))) + 95 - ((stats.get(k).name.length() / 2.0f * 58.0f)), ((k % 2) == 0) ? 115.0f : 240.0f));
+                    }
+                }
+                else if (i - 25 <= 0) {
+                    g.DrawLine(afterpen, new Point(95, 215), new Point(3840, 215));
+                    stations.clear();
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        stations.Add(stat2.name);
+                    }
+                    if (i > 0)
+                        g.DrawLine(beforepen, new Point(95, 215), new Point((3655 / 25 * (stations.indexOf(stat.name))) + 95, 215));
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (stat2.name.equals(stat.name))
+                            break;
+                        if (stat2.isStop)
+                        {
+                            g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                            g.DrawEllipse(bstpen, new Rectangle(new Point((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                        }
+                        else
+                        {
+                            g.DrawEllipse(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45, 13, 13);//左上
+                            g.DrawEllipse(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 + 26, 150 + 45, 13, 13);//右上
+                            g.DrawEllipse(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 + 26, 173 + 45, 13, 13);//右下
+                            g.DrawEllipse(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 173 + 45, 13, 13);//左下
+                            g.DrawLine(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45 + 6, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45 + 6 + 26);
+                            g.DrawLine(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 0 + 45, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                            g.DrawLine(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                            g.DrawLine(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                            g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                        }
+                        if (stat2.isStop)
+                        {
+                            g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                            g.DrawString(stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                        }
+                    }
+                    t2 = false;
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (stat2.name.equals(stat.name))
+                            t2 = true;
+                        if (t2)
+                        {
+                            if (stat2.isStop)
+                            {
+                                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                                g.DrawEllipse(astpen, new Rectangle(new Point((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                            }
+                            else
+                            {
+                                g.DrawEllipse(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45, 13, 13);//左上
+                                g.DrawEllipse(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 + 26, 150 + 45, 13, 13);//右上
+                                g.DrawEllipse(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 + 26, 173 + 45, 13, 13);//右下
+                                g.DrawEllipse(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 173 + 45, 13, 13);//左下
+                                g.DrawLine(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45 + 6, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45 + 6 + 26);
+                                g.DrawLine(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 0 + 45, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                                g.DrawLine(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                                g.DrawLine(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                            }
+                            g.DrawString("》》》", new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.WHITE)), 3655.0f / 25.0f * (stations.indexOf(stat2.name) + 1 + 0.05f), 170 + 45 - 10);
+                            if (stat2.isStop)
+                            {
+                                g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                                if (stat2.delayTime > 0)
+                                    g.DrawString("+" + Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.RED)), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                                else if (stat2.delayTime == 0)
+                                    g.DrawString(Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                                else if (stat2.delayTime < 0)
+                                    g.DrawString(Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.argb(255,0,100,0))), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+
+                            }
+                        }
+                    }
+                    for (int k = 0; k < 26; k++)
+                    {
+                        g.DrawString(stats.get(k).name, new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (k)) + 95 - ((stats.get(k).name.length() / 2.0f * 58.0f)), ((k % 2) == 0) ? 115.0f : 240.0f));
+                    }
+                }
+                else {
+                    g.DrawLine(afterpen, new Point(0, 215), new Point(3840, 215));
+                    g.DrawLine(beforepen, new Point(0, 215), new Point((3655 / 25 * (25)) + 95, 215));
+                    t3 = 0;
+                    t4 = false;
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (t3 == 26)
+                            break;
+                        if (stat2.name.equals(stats.get(i - 26).name))
+                            t4 = true;
+                        if (t4)
+                        {
+                            if (stat2.isStop)
+                            {
+                                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (t3 - 1)) + 95 - 27, 188), new Size(54, 54)));
+                                g.DrawEllipse(bstpen, new Rectangle(new Point((3655 / 25 * (t3 - 1)) + 95 - 27, 188), new Size(54, 54)));
+                            }
+                            else
+                            {
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26, 150 + 45, 13, 13);//左上
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3 - 1) + 95 + 26, 150 + 45, 13, 13);//右上
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3 - 1) + 95 + 26, 173 + 45, 13, 13);//右下
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26, 173 + 45, 13, 13);//左下
+                                g.DrawLine(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26, 150 + 45 + 6, 3655 / 25 * (t3 - 1) + 95 - 26, 150 + 45 + 6 + 26);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26 + 6, 150 + 0 + 45, 3655 / 25 * (t3 - 1) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / 25 * (t3 - 1) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / 25 * (t3 - 1) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / 25 * (t3 - 1) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                            }
+                            if (stat2.isStop)
+                            {
+                                g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * ((t3 - 1))) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                                g.DrawString(stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)),
+                                        new PointF((3655 / 25 * (t3 - 1)) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                            }
+                        }
+                        if (t4)
+                            t3++;
+                    }
+                    if (stats.get(i).isStop)
+                    {
+                        g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (25)) + 95 - 27, 188), new Size(54, 54)));
+                        g.DrawEllipse(astpen, new Rectangle(new Point((3655 / 25 * (25)) + 95 - 27, 188), new Size(54, 54)));
+                    }
+                    else
+                    {
+                        g.DrawEllipse(astpen, 3655 / 25 * (25) + 95 - 26, 150 + 45, 13, 13);//左上
+                        g.DrawEllipse(astpen, 3655 / 25 * (25) + 95 + 26, 150 + 45, 13, 13);//右上
+                        g.DrawEllipse(astpen, 3655 / 25 * (25) + 95 + 26, 173 + 45, 13, 13);//右下
+                        g.DrawEllipse(astpen, 3655 / 25 * (25) + 95 - 26, 173 + 45, 13, 13);//左下
+                        g.DrawLine(astpen, 3655 / 25 * (25) + 95 - 26, 150 + 45 + 6, 3655 / 25 * (25) + 95 - 26, 150 + 45 + 6 + 26);
+                        g.DrawLine(astpen, 3655 / 25 * (25) + 95 - 26 + 6, 150 + 0 + 45, 3655 / 25 * (25) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                        g.DrawLine(astpen, 3655 / 25 * (25) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / 25 * (25) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                        g.DrawLine(astpen, 3655 / 25 * (25) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / 25 * (25) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                        g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / 25 * (25) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                    }
+                    if (stat.isStop)
+                    {
+                        g.DrawString(stat.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * 25) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                        if (stat.delayTime > 0)
+                            g.DrawString("+" + Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.RED)),
+                                    new PointF((3655 / 25 * (t3 - 1)) + 95 - 7.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                        else if (stat.delayTime == 0)
+                            g.DrawString(Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)),
+                                    new PointF((3655 / 25 * (t3 - 1)) + 95 - 7.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                        else if (stat.delayTime < 0)
+                            g.DrawString(Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.argb(255,0,100,0))),
+                                    new PointF((3655 / 25 * (t3 - 1)) + 95 - 7.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                    }
+                    g.DrawString("》》》", new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.WHITE)), 3655.0f / 25.0f * (25 + 1 + 0.05f), 170 + 45 - 10);
+                    for (int k = i - 25; k < i + 1; k++)
+                    {
+                        g.DrawString(stats.get(k).name, new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (k - (i - 25))) + 95 - ((stats.get(k).name.length() / 2.0f * 58.0f)), ((k % 2) == 0) ? 115.0f : 240.0f));
+                    }
+                }
+                File.WriteBitmap(path + Character.toString(java.io.File.separatorChar) + tn.replace("/", "_") + "lcd" + lcdNum + ".png", bmp);
+                lcdNum++;
+                bmp = Bitmap.createBitmap(3840, 360, Bitmap.Config.ARGB_8888);
+                g = Graphics.FromImage(bmp);
+                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(0, 0), new Size(bmp.getWidth(), bmp.getHeight())));
+                g.FillRectangle(new SolidBrush(line_c), new Rectangle(new Point(0, 0), new Size(bmp.getWidth(), 90)));
+                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(1280, 18), new Size(27 * 2, 27 * 2)));
+                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(2505, 18), new Size(27 * 2, 27 * 2)));
+                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(1307, 18), new Size(2532 - 1307, 27 * 2)));
+                sb = new StringBuilder();
+                //车次：G6591/4    揭阳→广州东     本站：广州东       终点站：广州东
+                sb.append("车次：");
+                sb.append(tn);
+                sb.append("    ");
+                sb.append(stats.get(0).name);
+                sb.append("→");
+                sb.append(stats.get(stats.size() - 1).name);
+                sb.append("     本站：");
+                if (stat.isStop)
+                    sb.append(stat.name);
+                else
+                    sb.append("      ");
+                if (i == stats.size() - 1)
+                    sb.append("       终点站");
+                else
+                    sb.append("       下一站：");
+                for (int j = i + 1; j < stats.size(); j++)
+                {
+                    if (stats.get(j).isStop)
+                    {
+                        sb.append(stats.get(j).name);
+                        break;
+                    }
+                }
+                t = 0;
+                for (int l = 0; l < sb.length(); l++)
+                {
+                    if (sb.charAt(l) == ' ')
+                        t++;
+                }
+                if((((sb.length() - (t / 4.0)) * 15)) > ((2532 - 1307)/2.0))
+                {
+                    g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(1920 - (((sb.length() - (t / 4)) * 15)) - 27, 18), new Size(27 * 2, 27 * 2)));
+                    g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(1920 + (((sb.length() - (t / 4)) * 15)) - 27, 18), new Size(27 * 2, 27 * 2)));
+                    g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point(1920 - (((sb.length() - (t / 4)) * 15)), 18), new Size((((sb.length() - (t / 4)) * 15)) * 2, 27 * 2)));
+                }
+                g.DrawString(sb.toString(), new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF(1900.0f - ((sb.length() - (t / 4.0f)) * 20), 10.5f));
+                //担当企业 x=655
+                sbd = new StringBuilder();
+                sbd.append("担当企业：");
+                sbd.append(cpy);
+                g.DrawString(sbd.toString(), new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.WHITE)), new PointF(655.0f - (sbd.length() * 20.0f), 10.5f));
+                //本务 x=3070
+                sbb = new StringBuilder();
+                sbb.append("本务：");
+                sbb.append(tra.toUpperCase());
+                g.DrawString(sbb.toString(), new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.WHITE)), new PointF(3070.0f - (sbb.length() * 20.0f), 10.5f));
+                if ((i + 26 >= stats.size() - 1) && (i - 26 <= 0)) {
+                    g.DrawLine(afterpen, new Point(95, 215), new Point(3750, 215));
+                    stations.clear();
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        stations.Add(stat2.name);
+                    }
+                    if(stations.indexOf(stat.name) > 0)
+                        g.DrawLine(beforepen, new Point(95, 215), new Point((3655 / (stats.size() - 1) * (stations.indexOf(stat.name))) + 95, 215));
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (stat2.isStop)
+                        {
+                            g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                            g.DrawEllipse(bstpen, new Rectangle(new Point((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                        }
+                        else
+                        {
+                            g.DrawEllipse(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45, 13, 13);//左上
+                            g.DrawEllipse(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 + 26, 150 + 45, 13, 13);//右上
+                            g.DrawEllipse(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 + 26, 173 + 45, 13, 13);//右下
+                            g.DrawEllipse(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 173 + 45, 13, 13);//左下
+                            g.DrawLine(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45 + 6, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45 + 6 + 26);
+                            g.DrawLine(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 0 + 45, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                            g.DrawLine(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                            g.DrawLine(bstpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                            g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                        }
+                        if (stat2.isStop)
+                        {
+                            g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                            g.DrawString(stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                        }
+                        if (stat2.name.equals(stat.name))
+                            break;
+                    }
+                    t2 = false;
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (t2)
+                        {
+                            if (stat2.isStop)
+                            {
+                                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                                g.DrawEllipse(astpen, new Rectangle(new Point((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                            }
+                            else
+                            {
+                                g.DrawEllipse(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45, 13, 13);//左上
+                                g.DrawEllipse(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 + 26, 150 + 45, 13, 13);//右上
+                                g.DrawEllipse(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 + 26, 173 + 45, 13, 13);//右下
+                                g.DrawEllipse(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 173 + 45, 13, 13);//左下
+                                g.DrawLine(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45 + 6, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26, 150 + 45 + 6 + 26);
+                                g.DrawLine(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 0 + 45, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                                g.DrawLine(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                                g.DrawLine(astpen, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / (stats.size() - 1) * stations.indexOf(stat2.name) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                            }
+                            if (stat2.isStop)
+                            {
+                                g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                                if (stat2.delayTime > 0)
+                                    g.DrawString("+" + Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.RED)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                                else if (stat2.delayTime == 0)
+                                    g.DrawString(Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                                else if (stat2.delayTime < 0)
+                                    g.DrawString(Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.argb(255,0,100,0))), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                            }
+                            g.DrawString("》》》", new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.WHITE)), 3655.0f / (stats.size() - 1) * (stations.indexOf(stat2.name) - 1) + (3655.0f / (stats.size() - 1) / 2.0f) + 70.0f, 170 + 45 - 10);
+                        }
+                        if (stat2.name.equals(stat.name))
+                            t2 = true;
+                    }
+                    for (int k = 0; k < stats.size(); k++)
+                    {
+                        g.DrawString(stats.get(k).name, new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / (stats.size() - 1) * (stations.indexOf(stats.get(k).name))) + 95 - ((stats.get(k).name.length() / 2.0f * 58.0f)), ((k % 2) == 0) ? 115.0f : 240.0f));
+                    }
+                }
+                else if (i >= stats.size() - 1) {
+                    //g.DrawLine(afterpen, new Point(0, 215), new Point(3750, 215));
+                    g.DrawLine(beforepen, new Point(0, 215), new Point((3655 / 25 * 25) + 95, 215));
+                    t3 = 0;
+                    t4 = false;
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (t3 == 25)
+                            break;
+                        if (stat2.name.equals(stats.get(i - 25).name))
+                            t4 = true;
+                        if (t4)
+                        {
+                            if (stat2.isStop)
+                            {
+                                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (t3)) + 95 - 27, 188), new Size(54, 54)));
+                                g.DrawEllipse(bstpen, new Rectangle(new Point((3655 / 25 * (t3)) + 95 - 27, 188), new Size(54, 54)));
+                            }
+                            else
+                            {
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3) + 95 - 26, 150 + 45, 13, 13);//左上
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3) + 95 + 26, 150 + 45, 13, 13);//右上
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3) + 95 + 26, 173 + 45, 13, 13);//右下
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3) + 95 - 26, 173 + 45, 13, 13);//左下
+                                g.DrawLine(bstpen, 3655 / 25 * (t3) + 95 - 26, 150 + 45 + 6, 3655 / 25 * (t3) + 95 - 26, 150 + 45 + 6 + 26);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3) + 95 - 26 + 6, 150 + 0 + 45, 3655 / 25 * (t3) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / 25 * (t3) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / 25 * (t3) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / 25 * (t3) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                            }
+                            if (stat2.isStop)
+                            {
+                                g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * ((t3))) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                                g.DrawString(stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)),
+                                        new PointF((3655 / 25 * (t3)) + 95 - 7.5f, 170.0f + 42.0f));
+                            }
+                        }
+                        if (t4)
+                            t3++;
+                    }
+                    g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (25)) + 95 - 27, 188), new Size(54, 54)));
+                    g.DrawEllipse(astpen, new Rectangle(new Point((3655 / 25 * (25)) + 95 - 27, 188), new Size(54, 54)));
+                    if (stat.isStop)
+                    {
+                        g.DrawString(stat.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * 25) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                        if (stat.delayTime > 0)
+                            g.DrawString("+" + Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.RED)), new PointF((3655 / 25 * 25) + 95 - 17.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                        else if (stat.delayTime == 0)
+                            g.DrawString(Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * 25) + 95 - 17.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                        else if (stat.delayTime < 0)
+                            g.DrawString(Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.argb(255,0,100,0))), new PointF((3655 / 25 * 25) + 95 - 17.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                    }
+                    for (int k = i - 25; k < stats.size(); k++)
+                    {
+                        g.DrawString(stats.get(k).name, new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (k - (i - 25))) + 95 - ((stats.get(k).name.length() / 2.0f * 58.0f)), ((k % 2) == 0) ? 115.0f : 240.0f));
+                    }
+                }
+                else if (i - 25 <= 0) {
+                    g.DrawLine(afterpen, new Point(95, 215), new Point(3840, 215));
+                    stations.clear();
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        stations.Add(stat2.name);
+                    }
+                    if (i > 0)
+                        g.DrawLine(beforepen, new Point(95, 215), new Point((3655 / 25 * (stations.indexOf(stat.name))) + 95, 215));
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (stat2.isStop)
+                        {
+                            g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                            g.DrawEllipse(bstpen, new Rectangle(new Point((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                        }
+                        else
+                        {
+                            g.DrawEllipse(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45, 13, 13);//左上
+                            g.DrawEllipse(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 + 26, 150 + 45, 13, 13);//右上
+                            g.DrawEllipse(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 + 26, 173 + 45, 13, 13);//右下
+                            g.DrawEllipse(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 173 + 45, 13, 13);//左下
+                            g.DrawLine(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45 + 6, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45 + 6 + 26);
+                            g.DrawLine(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 0 + 45, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                            g.DrawLine(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                            g.DrawLine(bstpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                            g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                        }
+                        if (stat2.isStop)
+                        {
+                            g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                            g.DrawString(stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                        }
+                        if (stat2.name.equals(stat.name))
+                            break;
+                    }
+                    t2 = false;
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (t2)
+                        {
+                            if (stat2.isStop)
+                            {
+                                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                                g.DrawEllipse(astpen, new Rectangle(new Point((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 27, 188), new Size(54, 54)));
+                            }
+                            else
+                            {
+                                g.DrawEllipse(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45, 13, 13);//左上
+                                g.DrawEllipse(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 + 26, 150 + 45, 13, 13);//右上
+                                g.DrawEllipse(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 + 26, 173 + 45, 13, 13);//右下
+                                g.DrawEllipse(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 173 + 45, 13, 13);//左下
+                                g.DrawLine(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45 + 6, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26, 150 + 45 + 6 + 26);
+                                g.DrawLine(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 0 + 45, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                                g.DrawLine(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                                g.DrawLine(astpen, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / 25 * (stations.indexOf(stat2.name)) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                            }
+                            g.DrawString("》》》", new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.WHITE)), 3655.0f / 25.0f * (stations.indexOf(stat2.name) + 1 + 0.05f), 170 + 45 - 10);
+                            if (stat2.isStop)
+                            {
+                                g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                                if (stat2.delayTime > 0)
+                                    g.DrawString("+" + Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.RED)), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                                else if (stat2.delayTime == 0)
+                                    g.DrawString(Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                                else if (stat2.delayTime < 0)
+                                    g.DrawString(Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.argb(255,0,100,0))), new PointF((3655 / 25 * (stations.indexOf(stat2.name))) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+
+                            }
+                        }
+                        if (stat2.name.equals(stat.name))
+                        {
+                            t2 = true;
+                            g.DrawString("》》》", new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.WHITE)), 3655.0f / 25.0f * (stations.indexOf(stat2.name) + 1 + 0.05f), 170 + 45 - 10);
+                        }
+                    }
+                    for (int k = 0; k < 26; k++)
+                    {
+                        g.DrawString(stats.get(k).name, new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (k)) + 95 - ((stats.get(k).name.length() / 2.0f * 58.0f)), ((k % 2) == 0) ? 115.0f : 240.0f));
+                    }
+                }
+                else {
+                    g.DrawLine(afterpen, new Point(0, 215), new Point(3840, 215));
+                    g.DrawLine(beforepen, new Point(0, 215), new Point((3655 / 25 * (25)) + 95, 215));
+                    t3 = 0;
+                    t4 = false;
+                    for (PIDSInfo stat2 : stats)
+                    {
+                        if (t3 == 26)
+                            break;
+                        if (stat2.name.equals(stats.get(i - 26).name))
+                            t4 = true;
+                        if (t4)
+                        {
+                            if (stat2.isStop)
+                            {
+                                g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (t3 - 1)) + 95 - 27, 188), new Size(54, 54)));
+                                g.DrawEllipse(bstpen, new Rectangle(new Point((3655 / 25 * (t3 - 1)) + 95 - 27, 188), new Size(54, 54)));
+                            }
+                            else
+                            {
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26, 150 + 45, 13, 13);//左上
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3 - 1) + 95 + 26, 150 + 45, 13, 13);//右上
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3 - 1) + 95 + 26, 173 + 45, 13, 13);//右下
+                                g.DrawEllipse(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26, 173 + 45, 13, 13);//左下
+                                g.DrawLine(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26, 150 + 45 + 6, 3655 / 25 * (t3 - 1) + 95 - 26, 150 + 45 + 6 + 26);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26 + 6, 150 + 0 + 45, 3655 / 25 * (t3 - 1) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / 25 * (t3 - 1) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                                g.DrawLine(bstpen, 3655 / 25 * (t3 - 1) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / 25 * (t3 - 1) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                                g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / 25 * (t3 - 1) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                            }
+                            if (stat2.isStop)
+                            {
+                                g.DrawString(stat2.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * ((t3 - 1))) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                                g.DrawString(stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)),
+                                        new PointF((3655 / 25 * (t3 - 1)) + 95 - 7.5f - ((stat2.delayTime > 0 ? "+" + Short.toString(stat2.delayTime) : Short.toString(stat2.delayTime)).length() / 2), 170.0f + 42.0f));
+                            }
+                        }
+                        if (t4)
+                            t3++;
+                    }
+                    if (stats.get(i).isStop)
+                    {
+                        g.FillEllipse(new SolidBrush(Color.valueOf(Color.WHITE)), new Rectangle(new Point((3655 / 25 * (25)) + 95 - 27, 188), new Size(54, 54)));
+                        g.DrawEllipse(bstpen, new Rectangle(new Point((3655 / 25 * (25)) + 95 - 27, 188), new Size(54, 54)));
+                    }
+                    else
+                    {
+                        g.DrawEllipse(bstpen, 3655 / 25 * (25) + 95 - 26, 150 + 45, 13, 13);//左上
+                        g.DrawEllipse(bstpen, 3655 / 25 * (25) + 95 + 26, 150 + 45, 13, 13);//右上
+                        g.DrawEllipse(bstpen, 3655 / 25 * (25) + 95 + 26, 173 + 45, 13, 13);//右下
+                        g.DrawEllipse(bstpen, 3655 / 25 * (25) + 95 - 26, 173 + 45, 13, 13);//左下
+                        g.DrawLine(bstpen, 3655 / 25 * (25) + 95 - 26, 150 + 45 + 6, 3655 / 25 * (25) + 95 - 26, 150 + 45 + 6 + 26);
+                        g.DrawLine(bstpen, 3655 / 25 * (25) + 95 - 26 + 6, 150 + 0 + 45, 3655 / 25 * (25) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 0);
+                        g.DrawLine(bstpen, 3655 / 25 * (25) + 95 - 26 + 6, 150 + 45 + 12 + 26, 3655 / 25 * (25) + 95 - 26 + 26 + 25 + 3, 150 + 45 + 12 + 26);
+                        g.DrawLine(bstpen, 3655 / 25 * (25) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6, 3655 / 25 * (25) + 95 - 26 + 6 + 26 + 26 + 3, 150 + 45 + 6 + 26);
+                        g.FillRectangle(new SolidBrush(Color.valueOf(Color.WHITE)), 3655 / 25 * (25) + 95 - 26 + 6, 150 + 45 + 6, 26 * 2 + 3, 26);
+                    }
+                    if (stat.isStop)
+                    {
+                        g.DrawString(stat.arriveTime, new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * 25) + 95 - 17.5f - 8.25f + 2.5f, 170.0f + 28.0f));
+                        if (stat.delayTime > 0)
+                            g.DrawString("+" + Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.RED)), new PointF((3655 / 25 * (t3 - 1)) + 95 - 7.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                        else if (stat.delayTime == 0)
+                            g.DrawString(Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (t3 - 1)) + 95 - 7.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                        else if (stat.delayTime < 0)
+                            g.DrawString(Short.toString(stat.delayTime), new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.argb(255,0,100,0))), new PointF((3655 / 25 * (t3 - 1)) + 95 - 7.5f - ((stat.delayTime > 0 ? "+" + Short.toString(stat.delayTime) : Short.toString(stat.delayTime)).length() / 2), 170.0f + 42.0f));
+                    }
+                    g.DrawString("》》》", new Font("微软雅黑", 10), new SolidBrush(Color.valueOf(Color.WHITE)), 3655.0f / 25.0f * (25 + 1 + 0.05f), 170 + 45 - 10);
+                    for (int k = i - 25; k < i + 1; k++)
+                    {
+                        g.DrawString(stats.get(k).name, new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.BLACK)), new PointF((3655 / 25 * (k - (i - 25))) + 95 - ((stats.get(k).name.length() / 2.0f * 58.0f)), ((k % 2) == 0) ? 115.0f : 240.0f));
+                    }
+                }
+                File.WriteBitmap(path + Character.toString(java.io.File.separatorChar) + tn.replace("/", "_") + "lcd" + lcdNum + ".png", bmp);
+                lcdNum++;
+                //if (i == 10)
+                //    break;
+                i++;
+            }
+            new AlertDialog.Builder(this)
+                    .setTitle("提示")
+                    .setMessage("导出成功")
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {  }
+                    })
+                    .create().show();
+        }
+        catch (Exception ex)
+        {
+            new AlertDialog.Builder(this)
+                    .setTitle("提示")
+                    .setMessage("导出失败")
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {  }
+                    })
+                    .create().show();
         }
     }
 }

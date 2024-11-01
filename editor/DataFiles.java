@@ -1,7 +1,6 @@
 package com.example.editor;
 
-//2030 lines
-public class DataFiles {
+public class DataFiles { //4017 lines; up 1987 lines
     public static String[] railDatas;
     public static String[] emuDatas;
 }

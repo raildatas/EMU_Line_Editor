@@ -15,9 +15,18 @@ public class Dictionary<K,V> {
     public V GetE(K k) {
         for (int i = 0;i<key.size();i++)
         {
-            if(k == key.get(i))
+            if(k.equals(key.get(i)))
                 return value.get(i);
         }
         return null;
+    }
+    public void SetE(K k, V v) {
+        for (int i = 0;i < key.size();i++)
+        {
+            if(k.equals(key.get(i))) {
+                value.set(i, v);
+                return;
+            }
+        }
     }
 }
