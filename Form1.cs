@@ -361,7 +361,7 @@ namespace ELE
                 }
                 cbo_rcp.SelectedIndex = 0;
                 //StringBuilder sb2 = new StringBuilder();
-                for (int i = 0; i < Share.rails.Count; i++)
+                /*for (int i = 0; i < Share.rails.Count; i++)
                 {
                     spdstrs = Share.rails[i].speeds.Split(new char[] { '\n' });
                     for (int j = 0; j < spdstrs.Length; j++)
@@ -381,7 +381,7 @@ namespace ELE
                         if (j + 1 < spdstrs.Length)
                             Share.rails[i].speeds += "\n";
                     }
-                    /*for (int j = 0; j < Share.rails[i].lengths.Count; j++)
+                    for (int j = 0; j < Share.rails[i].lengths.Count; j++)
                     {
                         sb2.Append(Share.rails[i].name);
                         sb2.Append("    ");
@@ -393,8 +393,8 @@ namespace ELE
                         sb2.Append("km\r\n");
                     }
                     sb2.Append(Share.rails[i].speeds);
-                    sb2.Append("\r\n\r\n");*/
-                }
+                    sb2.Append("\r\n\r\n");
+                }*/
                 //File.WriteAllText("rds.txt", sb2.ToString());
             }
             catch (Exception e)
