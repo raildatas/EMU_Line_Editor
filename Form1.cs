@@ -964,15 +964,15 @@ namespace ELE
                         name = ((string)((JObject)j2[t])["name"]).Split(' ')[0];
                         if (t == j2.Count - 1)
                         {
-                            ((JObject)j2[t]).Add("name", name + " " + ToTime(downtimes[tt].deparTime) + "开");
+                            ((JObject)j2[t])["name"] = name + " " + ToTime(downtimes[tt].deparTime) + "开";
                         }
                         else if (t == 0)
                         {
-                            ((JObject)j2[t]).Add("name", name + " " + ToTime(downtimes[tt].arriveTime) + "到");
+                            ((JObject)j2[t])["name"] = (name + " " + ToTime(downtimes[tt].arriveTime) + "到");
                         }
                         else
                         {
-                            ((JObject)j2[t]).Add("name", name + " " + ToTime(downtimes[tt].arriveTime) + "到 " + ToTime(downtimes[tt].deparTime) + "开" + (downtimes[tt].teg ? "技停" : ""));
+                            ((JObject)j2[t])["name"] = (name + " " + ToTime(downtimes[tt].arriveTime) + "到 " + ToTime(downtimes[tt].deparTime) + "开" + (downtimes[tt].teg ? "技停" : ""));
                         }
                         tt++;
                     }
@@ -1101,13 +1101,13 @@ namespace ELE
                 upmin = int.Parse(strs[1]);
                 String tmp1 = upmin < 10 ? "0" + (upmin).ToString() : (upmin).ToString();
                 String tmp2 = uphour < 10 ? "0" + (uphour).ToString() : (uphour).ToString();
-                tbx_uptime.Text = (tmp2 + ":" + tmp1);
+                mtb_uptime.Text = (tmp2 + tmp1);
                 strs = str[2].Split(' ');
                 downhour = int.Parse(strs[0]);
                 downmin = int.Parse(strs[1]);
                 tmp1 = downmin < 10 ? "0" + (downmin).ToString() : (downmin).ToString();
                 tmp2 = downhour < 10 ? "0" + (downhour).ToString() : (downhour).ToString();
-                tbx_downtime.Text = (tmp2 + ":" + tmp1);
+                mtb_downtime.Text = (tmp2 + tmp1);
                 train = str[3];
                 ver = str[4];
                 int tmp5 = 0, which = 0;
