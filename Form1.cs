@@ -13,6 +13,11 @@ namespace ELE
 {
     public partial class Form1 : Form
     {
+        string FTPCONSTR = "ftp://012.3vftp.cn:3535/";
+        string FTPUSERNAME = "crh380b";
+        string FTPPASSWORD = "142410";
+        string de1 = null;
+        bool open = false;
         Boolean select = false;
         Boolean flag = true;
         int upmin = 6, uphour = 10, downmin = 6, downhour = 10;
@@ -20,6 +25,7 @@ namespace ELE
         List<String> emus = new List<string>();
         Dictionary<String, String> dic = new Dictionary<String, String>();
         Dictionary<String, String> dic2 = new Dictionary<String, String>();
+        Dictionary<String, Ticket> tkl = new Dictionary<String, Ticket>();
         List<String> dk1 = new List<string>();
         List<String> dk2 = new List<string>();
         List<TimeTime> uptimes = new List<TimeTime>();
@@ -34,7 +40,7 @@ namespace ELE
         String appdir;
         WebClient wc = new WebClient();
         string file = "";
-        private static double EARTH_RADIUS = 6378137;
+        static double EARTH_RADIUS = 6378137;
 
         public Form1()
         {
@@ -53,7 +59,7 @@ namespace ELE
             return d * Math.PI / 180.0;
         }
         public static double GetLength(double lng1, double lat1, double lng2, double lat2)
-        {//获取长度
+        {
             double radLat1 = rad(lat1);
             double radLat2 = rad(lat2);
             double a = radLat1 - radLat2;
@@ -63,7 +69,7 @@ namespace ELE
             s = Math.Round(s * 10000) / 10000;
             return s / 1000.0;
         }
-        SeatType GetSeatType(String str)
+        public SeatType GetSeatType(String str)
         {//String转SeatType
             switch (str.ToUpper())
             {
@@ -100,13 +106,53 @@ namespace ELE
                     return SeatType.ZYC;
                 case "BZ":
                     return SeatType.BZ;
+                default:
+                    return SeatType.UK;
             }
-            return SeatType.ZE;
+        }
+        public String ToString(SeatType st)
+        {
+            switch (st)
+            {
+                case SeatType.ZE:
+                    return "二等座";
+                case SeatType.D:
+                    return "动力车";
+                case SeatType.CA:
+                    return "餐车";
+                case SeatType.WG:
+                    return "高级动卧";
+                case SeatType.WR:
+                    return "动卧";
+                case SeatType.WY:
+                    return "一等卧";
+                case SeatType.WE:
+                    return "二等卧";
+                case SeatType.ZEC:
+                    return "二等座";
+                case SeatType.SW:
+                    return "商务座";
+                case SeatType.DGN:
+                    return "多功能座";
+                case SeatType.UY:
+                    return "优选一等座";
+                case SeatType.ZY:
+                    return "一等座";
+                case SeatType.ZT:
+                    return "特等座";
+                case SeatType.ZYC:
+                    return "一等座";
+                case SeatType.WRC:
+                    return "动卧";
+                case SeatType.BZ:
+                    return "标准座";
+                default:
+                    return "未知席别";
+            }
         }
         public String Gethtml(String url, int delay)
         {
             byte[] buffer = wc.DownloadData(url);
-            ;
             return Encoding.UTF8.GetString(buffer, 0, buffer.Length);
         }
         public string replace(string str, char ch)
@@ -117,6 +163,7 @@ namespace ELE
         {
             if (!flag)
                 return;
+            Control.CheckForIllegalCrossThreadCalls = false;
             select = false;
             Share.emus = new List<EMU>();
             Share.rails = new List<Rail>();
@@ -133,52 +180,150 @@ namespace ELE
             Boolean b;
             JObject item;
             String[] replaceDatas = null;
+            String[] ntfs;
             String html;
             double length;
             int test = 0;
             int y = 0;
             appdir = Directory.GetCurrentDirectory() + "\\";
+            bool ei()
+            {
+                return File.Exists(appdir + "evnets.dta") && File.Exists(appdir + "ver.dta") && File.Exists(appdir + "emudata.dta") &&
+                    File.Exists(appdir + "railwaydata.dta") && File.Exists(appdir + "replace.dta") && File.Exists(appdir + "rcp.dta") && File.Exists(appdir + "smallstations.dta");
+            }
+            if ((DateTime.Now.Year == 2025) && (DateTime.Now.Month == 4) && (DateTime.Now.Day <= 12))
+            {
+                if ((DateTime.Now.Day == 12) && (DateTime.Now.Hour >= 18))
+                    goto conti;
+                tabControl1.TabPages.RemoveAt(2);
+            }
+     conti: try
+            {
+                html = Gethtml("https://raildatas.github.io/2^9+1.html", 0).Replace("\r", "");
+                ntfs = html.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < ntfs.Length; i++)
+                {
+                    lbx_ntfs.Items.Add("UID: " + ntfs[i]);
+                }
+            }
+            catch
+            {
+                lbx_ntfs.Items.Clear();
+                lbx_ntfs.Items.Add("反火车迷攻击数据网站导致数据网站崩溃力~");
+            }
             try
             {
-                if (!File.Exists(appdir + "settings.ini"))
+                if (!ei())
                 {
-                    File.WriteAllText(appdir + "settings.ini", "dataLink=https://raildatas.github.io/");
+                    File.WriteAllText(appdir + "settings.ini", "dataLink=offical");
                 }
                 html = File.ReadAllText(appdir + "settings.ini");
                 for (int i = 0; i < html.Split('=').Length; i += 2)
                     Share.settings.Add(html.Split('=')[i], html.Split('=')[i + 1]);
-                if (!File.Exists(appdir + "evnets.dta"))
-                    html = Gethtml(Share.settings["dataLink"] + "ver.html", 0);
+                string dl = Share.settings["dataLink"];
+                if (dl.Equals("offical"))
+                {
+                    dl = "https://raildatas.github.io/";
+                    try
+                    {
+                        if (!ei())
+                            html = Download("ver.html");
+                        else
+                        {
+                            html = Download("ver.html");
+                            if (File.ReadAllText(appdir + "ver.dta").Equals(html))
+                                throw new NullException();
+                        }
+                        File.WriteAllText(appdir + "ver.dta", html);
+                        html = Download("emudata.html");
+                        DataFiles.emuDatas = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "emudata.dta", html);
+                        html = Download("railwaydata.html");
+                        DataFiles.railDatas = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "railwaydata.dta", html);
+                        html = Download("replace.html");
+                        replaceDatas = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "replace.dta", html);
+                        html = Download("rcp.html");
+                        rcps = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "rcp.dta", html);
+                        html = Download("smallstations.html");
+                        ssstrs = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "smallstations.dta", html);
+                        html = Download("evnets.html");
+                        evens = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "evnets.dta", html);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex is NullException)
+                            throw new NullException();
+                        if (!ei())
+                            html = Gethtml(dl + "ver.html", 0);
+                        else
+                        {
+                            html = Gethtml(Share.settings["dataLink"] + "ver.html", 10);
+                            if (File.ReadAllText(appdir + "ver.dta").Equals(html))
+                                throw new NullException();
+                        }
+                        File.WriteAllText(appdir + "ver.dta", html);
+                        html = Gethtml(dl + "emudata.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                        DataFiles.emuDatas = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "emudata.dta", html);
+                        html = Gethtml(dl + "railwaydata.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                        DataFiles.railDatas = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "railwaydata.dta", html);
+                        html = Gethtml(dl + "replace.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                        replaceDatas = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "replace.dta", html);
+                        html = Gethtml(dl + "rcp.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                        rcps = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "rcp.dta", html);
+                        html = Gethtml(dl + "smallstations.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                        ssstrs = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "smallstations.dta", html);
+                        html = Gethtml(dl + "evnets.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                        evens = replace(html, '\r').Split('\n');
+                        File.WriteAllText(appdir + "evnets.dta", html);
+                    }
+                }
                 else
                 {
-                    html = Gethtml("Share.settings[\"dataLink\"] + \"ver.html", 10);
-                    if (File.ReadAllText(appdir + "ver.dta").Equals(html))
-                        throw new Exception();
+                    if (!ei())
+                        html = Gethtml(dl + "ver.html", 0);
+                    else
+                    {
+                        html = Gethtml(Share.settings["dataLink"] + "ver.html", 10);
+                        if (File.ReadAllText(appdir + "ver.dta").Equals(html))
+                            throw new NullException();
+                    }
+                    File.WriteAllText(appdir + "ver.dta", html);
+                    html = Gethtml(dl + "emudata.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                    DataFiles.emuDatas = replace(html, '\r').Split('\n');
+                    File.WriteAllText(appdir + "emudata.dta", html);
+                    html = Gethtml(dl + "railwaydata.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                    DataFiles.railDatas = replace(html, '\r').Split('\n');
+                    File.WriteAllText(appdir + "railwaydata.dta", html);
+                    html = Gethtml(dl + "replace.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                    replaceDatas = replace(html, '\r').Split('\n');
+                    File.WriteAllText(appdir + "replace.dta", html);
+                    html = Gethtml(dl + "rcp.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                    rcps = replace(html, '\r').Split('\n');
+                    File.WriteAllText(appdir + "rcp.dta", html);
+                    html = Gethtml(dl + "smallstations.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                    ssstrs = replace(html, '\r').Split('\n');
+                    File.WriteAllText(appdir + "smallstations.dta", html);
+                    html = Gethtml(dl + "evnets.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
+                    evens = replace(html, '\r').Split('\n');
+                    File.WriteAllText(appdir + "evnets.dta", html);
                 }
-                File.WriteAllText(appdir + "ver.dta", html);
-                html = Gethtml(Share.settings["dataLink"] + "emudata.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
-                DataFiles.emuDatas = replace(html, '\r').Split('\n');
-                File.WriteAllText(appdir + "emudata.dta", html);
-                html = Gethtml(Share.settings["dataLink"] + "railwaydata.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
-                DataFiles.railDatas = replace(html, '\r').Split('\n');
-                File.WriteAllText(appdir + "railwaydata.dta", html);
-                html = Gethtml(Share.settings["dataLink"] + "replace.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
-                replaceDatas = replace(html, '\r').Split('\n');
-                File.WriteAllText(appdir + "replace.dta", html);
-                html = Gethtml(Share.settings["dataLink"] + "rcp.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
-                rcps = replace(html, '\r').Split('\n');
-                File.WriteAllText(appdir + "rcp.dta", html);
-                html = Gethtml(Share.settings["dataLink"] + "smallstations.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
-                ssstrs = replace(html, '\r').Split('\n');
-                File.WriteAllText(appdir + "smallstations.dta", html);
-                html = Gethtml(Share.settings["dataLink"] + "evnets.html", (File.Exists(appdir + "evnets.dta") ? 10 : 0));
-                evens = replace(html, '\r').Split('\n');
-                File.WriteAllText(appdir + "evnets.dta", html);
             }
             catch (Exception e)
             {
+                /*if(!(e is NullException))
+                    this.Close();*/
                 //System.exit(1);
-                if (!File.Exists(appdir + "evnets.dta"))
+                if ((!ei()) && false)
                     this.Close();
                 else
                 {
@@ -342,19 +487,26 @@ namespace ELE
                         }
                     }
                 }
-                foreach (String item2 in replaceDatas)
+                try
                 {
-                    if (item2.StartsWith("*"))
+                    if (!replaceDatas[0].Equals(""))
                     {
-                        dic2.Add(item2.Substring(1).Split(' ')[0], item2.Split(' ')[1]);
-                        dk2.Add(item2.Substring(1).Split(' ')[0]);
-                    }
-                    else
-                    {
-                        dic.Add(item2.Split(' ')[0], item2.Split(' ')[1]);
-                        dk1.Add(item2.Split(' ')[0]);
+                        foreach (String item2 in replaceDatas)
+                        {
+                            if (item2.StartsWith("*"))
+                            {
+                                dic2.Add(item2.Substring(1).Split(' ')[0], item2.Split(' ')[1]);
+                                dk2.Add(item2.Substring(1).Split(' ')[0]);
+                            }
+                            else
+                            {
+                                dic.Add(item2.Split(' ')[0], item2.Split(' ')[1]);
+                                dk1.Add(item2.Split(' ')[0]);
+                            }
+                        }
                     }
                 }
+                catch { }
                 foreach (var rci in rcps)
                 {
                     cbo_rcp.Items.Add(rci);
@@ -428,7 +580,7 @@ namespace ELE
                 }
             }
             this.lis = AStar(t1, t2, false);*/
-                //textBox1_Click(sender, e);
+            //textBox1_Click(sender, e);
         }
         private void 退出XToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -648,9 +800,7 @@ namespace ELE
                 selectB = 0;
                 foreach (Station item in Share.stations)
                 {
-                    if (item.name
-                            .Equals(tbx_before.Text.ToString())
-                            && (!(item.name.ToLower().StartsWith("x"))) && ((!(item.name.ToLower().EndsWith("线路所")))))
+                    if (item.name.Equals(tbx_before.Text.ToString()) && (!(item.name.ToLower().StartsWith("x"))) && ((!(item.name.ToLower().EndsWith("线路所"))) || (!tbx_before.Enabled)))
                     {
                         b = true;
                         foreach (int items in item.rails)
@@ -798,6 +948,17 @@ namespace ELE
                     cbx_afterteg.Checked));
             tbx_before.Text = (Share.stations[(selectA)].name);
             UpdateData();
+            List<string> stas = new List<string>();
+            for (int i = 0; i < lis.Count; i++)
+                if (!((lis[i].beforestop == 0) || lis[i].beforeteg))
+                    stas.Add(Share.stations[lis[i].before].name);
+            if (!((lis[lis.Count - 1].afterstop == 0) || lis[lis.Count - 1].afterteg))
+                stas.Add(Share.stations[lis[lis.Count - 1].after].name);
+            lbx_lis.Items.Clear();
+            for (int i = 0; i < stas.Count; i++)
+                for (int j = 0; j < stas.Count; j++)
+                    if (!stas[i].Equals(stas[j]))
+                        lbx_lis.Items.Add(stas[i] + " → " + stas[j]);
             selectB = selectA;
             selectL = -1;
             selectA = -1;
@@ -819,12 +980,16 @@ namespace ELE
             tbx_afterstop.Enabled = (true);
             SetTime();
         }
-        public void Out(bool isshow, string path)
+        public void Out(object o)
         {
+            object[] os = o as object[];
+            bool isshow = Convert.ToBoolean(os[0]);
+            string path = os[1] as string;
             StringBuilder sb = new StringBuilder();
             JArray jArray, j2;
             String name;
-            JObject tmp;
+            JObject tmp = new JObject();
+            JObject tmp2 = new JObject();
             bool b = false;
             bool b1 = false;
             int j = 0;
@@ -866,6 +1031,7 @@ namespace ELE
             sb.Append(",\"company\":\"");
             sb.Append(rcps[selectC]);
             sb.Append("\",\"route\":{\"up\":[");
+            jArray = new JArray();
             //progressDialog.setProgress(//progressDialog.getProgress() + 1);
             int i = 0;
             int k = 0;
@@ -880,9 +1046,21 @@ namespace ELE
                     b = false;
                     for (j = 0; j < jArray.Count;)
                     {
+                        ReloadRail(lis[i].line);
+                        jArray = Share.rails[(lis[i].line)].locations;
+                        if(b1)
+                        {
+                            jArray = new JArray();
+                            for (int t = Share.rails[(lis[i].line)].locations.Count - 1; t >= 0; t--)
+                            {
+                                jArray.Add((JObject)Share.rails[(lis[i].line)].locations[(t)]);
+                            }
+                        }
                         if (((string)((JObject)jArray[j])["name"]).Equals(Share.stations[(lis[i].before)].name))
                             b = true;
                         tmp = (JObject)jArray[j];
+                        tmp2 = tmp;
+                        tmp = null;
                         if (((string)((JObject)jArray[j])["name"]).Equals(Share.stations[(lis[i].after)].name))
                         {
                             if (b == false)
@@ -921,9 +1099,9 @@ namespace ELE
                             if (i == lis.Count - 1)
                             {
                                 if (isshow)
-                                    tmp["name"] = (((string)((JObject)jArray[j])["name"]) + " " + ToTime(uptimes[tt].arriveTime) + "到");
-                                j2.Add(tmp);
-                                sb.Append(tmp.ToString());
+                                    tmp2["name"] = (((string)((JObject)jArray[j])["name"]) + " " + ToTime(uptimes[tt].arriveTime) + "到");
+                                j2.Add(tmp2);
+                                sb.Append(tmp2.ToString());
                             }
                             break;
                         }
@@ -932,17 +1110,17 @@ namespace ELE
                             if ((!((string)((JObject)jArray[j])["name"]).Equals(Share.stations[(lis[i].before)].name))
                                     || (((string)((JObject)jArray[j])["name"]).Equals(Share.stations[(lis[i].before)].name)
                                     && (lis[i].beforestop == 0)))
-                                tmp["type"] = "waypoint";
+                                tmp2["type"] = "waypoint";
                             else if (isshow)
                             {
                                 if (i == 0)
-                                    tmp["name"] = (((string)((JObject)jArray[j])["name"]) + " " + ToTime(uptimes[tt].deparTime) + "开");
+                                    tmp2["name"] = (((string)((JObject)jArray[j])["name"]) + " " + ToTime(uptimes[tt].deparTime) + "开");
                                 else
-                                    tmp["name"] = (((string)((JObject)jArray[j])["name"]) + " " + ToTime(uptimes[tt].arriveTime) + "到 " + ToTime(uptimes[tt].deparTime) + "开" + (uptimes[tt].teg ? "技停" : ""));
+                                    tmp2["name"] = (((string)((JObject)jArray[j])["name"]) + " " + ToTime(uptimes[tt].arriveTime) + "到 " + ToTime(uptimes[tt].deparTime) + "开" + (uptimes[tt].teg ? "技停" : ""));
                                 tt++;
                             }
-                            sb.Append(tmp.ToString());
-                            j2.Add(tmp);
+                            sb.Append(tmp2.ToString());
+                            j2.Add(tmp2);
                             if (!((string)((JObject)jArray[(j + 1)])[("name")]).Equals(Share.stations[(lis[i].after)].name))
                                 sb.Append(",");
                         }
@@ -1052,9 +1230,30 @@ namespace ELE
                 (tbx_etim).Text = ("5");
                 cbx_afterteg.Checked = (false);
                 rb_exp.Checked = (true);
-                if(cbx_isAstar.Checked)
+                if (cbx_isAstar.Checked)
                     cbo_after.Enabled = true;
                 SetTime();
+                List<string> stas = new List<string>();
+                try
+                {
+                    for (int i = 0; i < lis.Count; i++)
+                        if (!((lis[i].beforestop == 0) || lis[i].beforeteg))
+                            stas.Add(Share.stations[lis[i].before].name);
+                    if (!((lis[lis.Count - 1].afterstop == 0) || lis[lis.Count - 1].afterteg))
+                        stas.Add(Share.stations[lis[lis.Count - 1].after].name);
+                }
+                catch { }
+                lbx_lis.Items.Clear();
+                for (int i = 0; i < stas.Count; i++)
+                    for (int j = 0; j < stas.Count; j++)
+                        if (!stas[i].Equals(stas[j]))
+                            lbx_lis.Items.Add(stas[i] + " → " + stas[j]);
+                try
+                {
+                    if (lbx_lis.SelectedIndex == -1)
+                        lbx_lis.SelectedIndex = 0;
+                }
+                catch { }
             }
         }
         private void cbo_rcp_SelectedIndexChanged(object sender, EventArgs e)
@@ -1083,6 +1282,9 @@ namespace ELE
                 lis.Clear();
                 bool b7;
                 ListItem li;
+                Ticket tk = null;
+                int x = 6;
+                List<string> stass = new List<string>();
                 uptimes = new List<TimeTime>();
                 downtimes = new List<TimeTime>();
                 for (int i = 0; i < rcps.Length; i++)
@@ -1152,9 +1354,51 @@ namespace ELE
                         cbx_isTwoTrain.Checked = (false);
                     cbx_no350mode.Checked = false;
                 }
-                tbx_trainNum.Text = (str[6]);
+                tbx_trainNum.Text = (str[6]); EMU f = null;
+                foreach (EMU emu in Share.emus)
+                {
+                    if (emu.name == train)
+                    {
+                        f = emu;
+                        if (emu.trains[cbo_trainSeat.SelectedIndex].Count > 10)
+                        {
+                            cbx_isTwoTrain.Checked = false;
+                            cbx_isTwoTrain.Enabled = false;
+                        }
+                        else
+                        {
+                            cbx_isTwoTrain.Checked = false;
+                            cbx_isTwoTrain.Enabled = true;
+                        }
+                        break;
+                    }
+                }
+                List<SeatType> st = new List<SeatType>();
+                bool b = false;
+                for (int i = 0; i < f.trains[cbo_trainSeat.SelectedIndex].Count; i++)
+                {
+                    for (int j = 0; j < f.trains[cbo_trainSeat.SelectedIndex][i].st.Count; j++)
+                    {
+                        b = false;
+                        for (int k = 0; k < st.Count; k++)
+                            b = b || ToString(st[k]).Equals(ToString(f.trains[cbo_trainSeat.SelectedIndex][i].st[j]));
+                        if (!b)
+                            st.Add(f.trains[cbo_trainSeat.SelectedIndex][i].st[j]);
+                    }
+                }
+                st.Remove(SeatType.D);
+                st.Remove(SeatType.UK);
+                st.Remove(SeatType.CA);
+                st.Remove(SeatType.ZEC);
+                st.Remove(SeatType.ZYC);
+                st.Remove(SeatType.WRC);
                 for (int i = 7; i < str.Length; i++)
                 {
+                    if (str[i].Equals("--END--"))
+                    {
+                        x = ++i;
+                        break;
+                    }
                     strs = str[i].Split(' ');
                     li = new ListItem(0, 0, 0, RunMode.MaxSpeed, 0, 0, 0, false, false);
                     b7 = false;
@@ -1248,7 +1492,41 @@ namespace ELE
                     }
                     selectB = li.after;
                     lis.Add(li);
+                    stass = new List<string>();
+                    for (int j = 0; j < lis.Count; j++)
+                        if (!((lis[j].beforestop == 0) || lis[j].beforeteg))
+                            stass.Add(Share.stations[lis[j].before].name);
+                    if (!((lis[lis.Count - 1].afterstop == 0) || lis[lis.Count - 1].afterteg))
+                        stass.Add(Share.stations[lis[lis.Count - 1].after].name);
+                    lbx_lis.Items.Clear();
+                    tkl.Clear();
+                    for (int j = 0; j < stass.Count; j++)
+                        for (int k = 0; k < stass.Count; k++)
+                            if (!stass[j].Equals(stass[k]))
+                            {
+                                lbx_lis.Items.Add(stass[j] + " → " + stass[k]);
+                                tkl.Add(stass[j] + " → " + stass[k], new Ticket(st.ToArray()));
+                            }
+                    if (lbx_lis.SelectedIndex == -1)
+                        lbx_lis.SelectedIndex = 0;
                     //progressDialog.setProgress(//progressDialog.getProgress() + 1);
+                }
+                if (x != 6)
+                {
+                    try
+                    {
+                        for (int i = x; i < str.Length; i++)
+                        {
+                            strs = str[i].Split(' ');
+                            tk = new Ticket();
+                            for (int j = 2; j < strs.Length; j++)
+                            {
+                                tk.Add((SeatType)Enum.Parse(typeof(SeatType), strs[j].Split('-')[0]), int.Parse(strs[j].Split('-')[1]));
+                            }
+                            tkl[strs[0] + " → " + strs[1]] = new Ticket(tk);
+                        }
+                    }
+                    catch { }
                 }
                 保存SToolStripMenuItem.Enabled = (true);
                 导出EToolStripMenuItem.Enabled = (true);
@@ -1275,13 +1553,45 @@ namespace ELE
                 cbx_beforeteg.Enabled = (false);
                 cbx_afterteg.Checked = (false);
                 rb_exp.Checked = (true);
+                List<string> stas = new List<string>();
+                for (int i = 0; i < lis.Count; i++)
+                    if (!((lis[i].beforestop == 0) || lis[i].beforeteg))
+                        stas.Add(Share.stations[lis[i].before].name);
+                if (!((lis[lis.Count - 1].afterstop == 0) || lis[lis.Count - 1].afterteg))
+                    stas.Add(Share.stations[lis[lis.Count - 1].after].name);
+                lbx_lis.Items.Clear();
+                for (int i = 0; i < stas.Count; i++)
+                    for (int j = 0; j < stas.Count; j++)
+                        if (!stas[i].Equals(stas[j]))
+                            lbx_lis.Items.Add(stas[i] + " → " + stas[j]);
+                try
+                {
+                    open = true;
+                    if (lbx_lis.SelectedIndex == -1)
+                        lbx_lis.SelectedIndex = 0;
+                }
+                catch { }
                 //progressDialog.setProgress(MAX_PROGRESS);
                 //progressDialog.cancel();
+                try
+                {
+                    tk = tkl[lbx_lis.Items[0].ToString()];
+                    for (int i = 0; i < tk.k.Count; i++)
+                        dgv_tickets.Rows[i].Cells[1].Value = tk[tk.k[i]];
+                }
+                catch {  }
+                open = false;
+                MessageBox.Show("打开成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception e2)
             {
-                MessageBox.Show("打开失败", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("打开失败", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+        public void ReloadRail(int i)
+        {
+            JObject railstr = JObject.Parse(DataFiles.railDatas[i]);
+            Share.rails[i].locations = (JArray)((JObject)railstr["route"])[("up")];
         }
         private void UpdateData()
         {
@@ -1360,6 +1670,72 @@ namespace ELE
                 }
                 //progressDialog2.setProgress(//progressDialog.getProgress() + 1);
             }
+            Ticket tk = null;
+            sb2.Append("\n--END--");
+            for (int i = 0; i < lbx_lis.Items.Count; i++)
+            {
+                sb2.Append("\n");
+                try
+                {
+                    tk = tkl[lbx_lis.Items[i].ToString()];
+                }
+                catch
+                {
+                    EMU f = null;
+                    foreach (EMU emu in Share.emus)
+                    {
+                        if (emu.name == train)
+                        {
+                            f = emu;
+                            if (emu.trains[cbo_trainSeat.SelectedIndex].Count > 10)
+                            {
+                                cbx_isTwoTrain.Checked = false;
+                                cbx_isTwoTrain.Enabled = false;
+                            }
+                            else
+                            {
+                                cbx_isTwoTrain.Checked = false;
+                                cbx_isTwoTrain.Enabled = true;
+                            }
+                            break;
+                        }
+                    }
+                    List<SeatType> st = new List<SeatType>();
+                    SeatType s;
+                    bool b = false;
+                    for (int j = 0; j < f.trains[cbo_trainSeat.SelectedIndex].Count; j++)
+                    {
+                        for (int k = 0; k < f.trains[cbo_trainSeat.SelectedIndex][j].st.Count; k++)
+                        {
+                            b = false;
+                            for (int l = 0; l < st.Count; l++)
+                                b = b || ToString(st[l]).Equals(ToString(f.trains[cbo_trainSeat.SelectedIndex][j].st[k]));
+                            if (!b)
+                                st.Add(f.trains[cbo_trainSeat.SelectedIndex][j].st[k]);
+                        }
+                    }
+                    st.Remove(SeatType.D);
+                    st.Remove(SeatType.UK);
+                    st.Remove(SeatType.CA);
+                    st.Remove(SeatType.ZEC);
+                    st.Remove(SeatType.ZYC);
+                    st.Remove(SeatType.WRC);
+                    tkl.Add(lbx_lis.Items[i].ToString(), new Ticket(st.ToArray()));
+                    tk = tkl[lbx_lis.Items[i].ToString()];
+                }
+                sb2.Append(lbx_lis.Items[i].ToString().Split(' ')[0]);
+                sb2.Append(" ");
+                sb2.Append(lbx_lis.Items[i].ToString().Split(' ')[2]);
+                sb2.Append(" ");
+                for (int j = 0; j < tk.k.Count; j++)
+                {
+                    sb2.Append(tk.k[j].ToString());
+                    sb2.Append("-");
+                    sb2.Append(tk[tk.k[j]].ToString());
+                    if (j < (tk.k.Count - 1))
+                        sb2.Append(" ");
+                }
+            }
             try
             {
                 File.WriteAllText(path, sb2.ToString());
@@ -1368,7 +1744,7 @@ namespace ELE
             catch (Exception e2)
             {
                 //progressDialog2.cancel();
-                MessageBox.Show("保存失败", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("保存失败", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         private void cbo_trainType_SelectedIndexChanged(object sender, EventArgs e)
@@ -1398,11 +1774,13 @@ namespace ELE
         private void cbo_trainSeat_SelectedIndexChanged(object sender, EventArgs e)
         {
             ver = cbo_trainSeat.Items[cbo_trainSeat.SelectedIndex].ToString();
+            EMU f = null;
             foreach (EMU emu in Share.emus)
             {
                 if (emu.name == train)
                 {
-                    if (emu.trains[0].Count > 10)
+                    f = emu;
+                    if (emu.trains[cbo_trainSeat.SelectedIndex].Count > 10)
                     {
                         cbx_isTwoTrain.Checked = false;
                         cbx_isTwoTrain.Enabled = false;
@@ -1415,6 +1793,42 @@ namespace ELE
                     break;
                 }
             }
+            List<SeatType> st = new List<SeatType>();
+            SeatType s;
+            bool b = false;
+            for (int i = 0; i < f.trains[cbo_trainSeat.SelectedIndex].Count; i++)
+            {
+                for (int j = 0; j < f.trains[cbo_trainSeat.SelectedIndex][i].st.Count; j++)
+                {
+                    b = false;
+                    for (int k = 0; k < st.Count; k++)
+                        b = b || ToString(st[k]).Equals(ToString(f.trains[cbo_trainSeat.SelectedIndex][i].st[j]));
+                    if (!b)
+                        st.Add(f.trains[cbo_trainSeat.SelectedIndex][i].st[j]);
+                }
+            }
+            st.Remove(SeatType.D);
+            st.Remove(SeatType.UK);
+            st.Remove(SeatType.CA);
+            st.Remove(SeatType.ZEC);
+            st.Remove(SeatType.ZYC);
+            st.Remove(SeatType.WRC);
+            tkl = new Dictionary<string, Ticket>();
+            foreach (object item in lbx_lis.Items)
+            {
+                tkl.Add(item.ToString(), new Ticket(st.ToArray()));
+            }
+            dgv_tickets.Rows.Clear();
+            for (int i = 0; i < st.Count; i++)
+            {
+                dgv_tickets.Rows.Add(ToString(st[i]), 0);
+            }
+            try
+            {
+                lbx_lis.SelectedIndex = 0;
+                lbx_lis.SelectedIndex = lbx_lis.SelectedIndex;
+            }
+            catch { }
             SetTime();
         }
         private void cbx_no350mode_CheckedChanged(object sender, EventArgs e)
@@ -1427,7 +1841,8 @@ namespace ELE
             fbd.ShowDialog();
             if (string.IsNullOrEmpty(fbd.SelectedPath))
                 return;
-            Out(MessageBox.Show("在地图中是否显示到发时间？", "提示", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes ? true : false, fbd.SelectedPath);
+            new Thread(Out) { IsBackground = true }
+            .Start(new object[] { MessageBox.Show("在地图中是否显示到发时间？", "提示", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes ? true : false, fbd.SelectedPath });
         }
         private void 车内PIDS文件LToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1441,7 +1856,7 @@ namespace ELE
         {
             string path = (obj as object[])[0].ToString();
             bool showdeley = Convert.ToBoolean((obj as object[])[1]);
-            try
+            //try
             {
                 Color line_c;
                 EMU e2 = null;
@@ -1662,7 +2077,7 @@ namespace ELE
                     sbb.Append("本务：");
                     sbb.Append(tra.ToUpper());
                     g.DrawString(sbb.ToString(), new Font("微软雅黑", 30), new SolidBrush(Color.White), new PointF(3070.0f - (sbb.Length * 15.0f), 15.5f));
-                    if ((i + 26 >= stats.Count - 1) && (i - 26 <= 0)) //一次性
+                    if (26 >= stats.Count) //一次性
                     {
                         g.DrawLine(afterpen, new Point(95, 215), new Point(3750, 215));
                         stations.Clear();
@@ -1953,7 +2368,7 @@ namespace ELE
                             g.DrawString(stats[k].name, new Font("微软雅黑", 40), new SolidBrush(Color.Black), new PointF((3655 / 25 * (k - (i - 25))) + 95 - ((stats[k].name.Length / 2.0f * 58.0f)), ((k % 2) == 0) ? 115.0f : 240.0f));
                         }
                     }
-                    bmp.Save(path + "\\" + tn + "lcd" + lcdNum + ".png");
+                    bmp.Save(path + "\\" + tn.Replace('/', '_') + "lcd" + lcdNum + ".png");
                     lcdNum++;
                     bmp = new Bitmap(3840, 360);
                     g = Graphics.FromImage(bmp);
@@ -2010,7 +2425,7 @@ namespace ELE
                     sbb.Append("本务：");
                     sbb.Append(tra.ToUpper());
                     g.DrawString(sbb.ToString(), new Font("微软雅黑", 30), new SolidBrush(Color.White), new PointF(3070.0f - (sbb.Length * 15.0f), 15.5f));
-                    if ((i + 26 >= stats.Count - 1) && (i - 26 <= 0))
+                    if (26 >= stats.Count)
                     {
                         g.DrawLine(afterpen, new Point(95, 215), new Point(3750, 215));
                         stations.Clear();
@@ -2304,7 +2719,7 @@ namespace ELE
                             g.DrawString(stats[k].name, new Font("微软雅黑", 40), new SolidBrush(Color.Black), new PointF((3655 / 25 * (k - (i - 25))) + 95 - ((stats[k].name.Length / 2.0f * 58.0f)), ((k % 2) == 0) ? 115.0f : 240.0f));
                         }
                     }
-                    bmp.Save(path + "\\" + tn + "lcd" + lcdNum + ".png");
+                    bmp.Save(path + "\\" + tn.Replace('/', '_') + "lcd" + lcdNum + ".png");
                     lcdNum++;
                     //if (i == 10)
                     //    break;
@@ -2312,7 +2727,7 @@ namespace ELE
                 }
                 MessageBox.Show("导出成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            catch
+            //catch
             {
                 MessageBox.Show("导出失败", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -2395,9 +2810,36 @@ namespace ELE
                         .Replace("5", "").Replace("4", "")
                         .Replace("/", "").Replace(" ", "").Length == 0);
                 if (b == false)
-                    (tbx_trainNum).Text = ("D301 D302");
+                    (tbx_trainNum).Text = ("D303 D304");
             }
             catch { }
+        }
+        public string Download(string ftpfilepath)
+        {
+            ftpfilepath = ftpfilepath.Replace("\\", "/");
+            string url = FTPCONSTR + ftpfilepath;
+            FtpWebRequest reqFtp = (FtpWebRequest)FtpWebRequest.Create(new Uri(url));
+            reqFtp.UseBinary = true;
+            reqFtp.Credentials = new NetworkCredential(FTPUSERNAME, FTPPASSWORD);
+            FtpWebResponse response = (FtpWebResponse)reqFtp.GetResponse();
+            Stream ftpStream = response.GetResponseStream();
+            long cl = response.ContentLength;
+            int bufferSize = 1024 * 1024 * 16;
+            int readCount;
+            byte[] buffer = new byte[bufferSize];
+            StringBuilder sb = new StringBuilder();
+            readCount = ftpStream.Read(buffer, 0, bufferSize);
+            while (readCount > 0)
+            {
+                if ((buffer[0] == 0xEF) && (buffer[1] == 0xBB) && (buffer[2] == 0xBF))
+                    sb.Append(Encoding.UTF8.GetString(buffer, 3, readCount - 3));
+                else
+                    sb.Append(Encoding.UTF8.GetString(buffer, 0, readCount));
+                readCount = ftpStream.Read(buffer, 0, bufferSize);
+            }
+            ftpStream.Close();
+            response.Close();
+            return sb.ToString();
         }
         public String CalcTime(int upmin, int uphour, bool up)
         {
@@ -2984,7 +3426,8 @@ namespace ELE
             new Thread(New) { IsBackground = false, ApartmentState = ApartmentState.STA }.Start();
             this.Close();
         }
-        [STAThread] public void New()
+        [STAThread]
+        public void New()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -3002,6 +3445,211 @@ namespace ELE
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             File.WriteAllText(Directory.GetCurrentDirectory() + "\\isclose.dta", "");
+        }
+        private void lbx_lis_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (lbx_lis.SelectedIndex == -1)
+                return;
+            if (open)
+                return;
+            Ticket tk = null;
+            if (de1 != null)
+            {
+                tk = tkl[de1];
+                int b = 0, c = 0;
+                EMU f = null;
+                foreach (EMU emu in Share.emus)
+                {
+                    if (emu.name == train)
+                    {
+                        f = emu;
+                        if (emu.trains[cbo_trainSeat.SelectedIndex].Count > 10)
+                        {
+                            cbx_isTwoTrain.Checked = false;
+                            cbx_isTwoTrain.Enabled = false;
+                        }
+                        else
+                        {
+                            cbx_isTwoTrain.Checked = false;
+                            cbx_isTwoTrain.Enabled = true;
+                        }
+                        break;
+                    }
+                }
+                for (int i = 0; i < tk.k.Count; i++)
+                {
+                    c = 0;
+                    for (int j = 0; j < f.trains[cbo_trainSeat.SelectedIndex].Count; j++)
+                    {
+                        for (int k = 0; k < f.trains[cbo_trainSeat.SelectedIndex][j].st.Count; k++)
+                        {
+                            try
+                            {
+                                if (ToString(tk.k[i]).Equals(ToString(f.trains[cbo_trainSeat.SelectedIndex][j].st[k])))
+                                    c += f.trains[cbo_trainSeat.SelectedIndex][j].dic[tk.k[i]];
+                            }
+                            catch
+                            {
+                                if (ToString(tk.k[i]).Equals(ToString(f.trains[cbo_trainSeat.SelectedIndex][j].st[k])))
+                                    c += f.trains[cbo_trainSeat.SelectedIndex][j].dic[(SeatType)Enum.Parse(typeof(SeatType), tk.k[i].ToString() + "C")];
+                            }
+                        }
+                    }
+                    try
+                    {
+                        b = int.Parse(dgv_tickets.Rows[i].Cells[1].Value.ToString());
+                    }
+                    catch
+                    {
+                        b = c;
+                    }
+                    if (b > c)
+                        b = c;
+                    tkl[de1][tk.k[i]] = b;
+                }
+            }
+            try
+            {
+                tk = tkl[lbx_lis.Items[lbx_lis.SelectedIndex].ToString()];
+            }
+            catch
+            {
+                EMU f = null;
+                foreach (EMU emu in Share.emus)
+                {
+                    if (emu.name == train)
+                    {
+                        f = emu;
+                        if (emu.trains[cbo_trainSeat.SelectedIndex].Count > 10)
+                        {
+                            cbx_isTwoTrain.Checked = false;
+                            cbx_isTwoTrain.Enabled = false;
+                        }
+                        else
+                        {
+                            cbx_isTwoTrain.Checked = false;
+                            cbx_isTwoTrain.Enabled = true;
+                        }
+                        break;
+                    }
+                }
+                List<SeatType> st = new List<SeatType>();
+                SeatType s;
+                bool b = false;
+                for (int i = 0; i < f.trains[cbo_trainSeat.SelectedIndex].Count; i++)
+                {
+                    for (int j = 0; j < f.trains[cbo_trainSeat.SelectedIndex][i].st.Count; j++)
+                    {
+                        b = false;
+                        for (int k = 0; k < st.Count; k++)
+                            b = b || ToString(st[k]).Equals(ToString(f.trains[cbo_trainSeat.SelectedIndex][i].st[j]));
+                        if (!b)
+                            st.Add(f.trains[cbo_trainSeat.SelectedIndex][i].st[j]);
+                    }
+                }
+                st.Remove(SeatType.D);
+                st.Remove(SeatType.UK);
+                st.Remove(SeatType.CA);
+                st.Remove(SeatType.ZEC);
+                st.Remove(SeatType.ZYC);
+                st.Remove(SeatType.WRC);
+                tkl.Add(lbx_lis.Items[lbx_lis.SelectedIndex].ToString(), new Ticket(st.ToArray()));
+                tk = tkl[lbx_lis.Items[lbx_lis.SelectedIndex].ToString()];
+            }
+            for (int i = 0; i < tk.k.Count; i++)
+                dgv_tickets.Rows[i].Cells[1].Value = tk[tk.k[i]];
+            de1 = lbx_lis.Items[lbx_lis.SelectedIndex].ToString();
+        }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (de1 == null) return;
+            Ticket tk = tkl[de1];
+            int b = 0, c = 0;
+            EMU f = null;
+            foreach (EMU emu in Share.emus)
+            {
+                if (emu.name == train)
+                {
+                    f = emu;
+                    if (emu.trains[cbo_trainSeat.SelectedIndex].Count > 10)
+                    {
+                        cbx_isTwoTrain.Checked = false;
+                        cbx_isTwoTrain.Enabled = false;
+                    }
+                    else
+                    {
+                        cbx_isTwoTrain.Checked = false;
+                        cbx_isTwoTrain.Enabled = true;
+                    }
+                    break;
+                }
+            }
+            for (int i = 0; i < tk.k.Count; i++)
+            {
+                c = 0;
+                for (int j = 0; j < f.trains[cbo_trainSeat.SelectedIndex].Count; j++)
+                {
+                    for (int k = 0; k < f.trains[cbo_trainSeat.SelectedIndex][j].st.Count; k++)
+                    {
+                        try
+                        {
+                            if (ToString(tk.k[i]).Equals(ToString(f.trains[cbo_trainSeat.SelectedIndex][j].st[k])))
+                                c += f.trains[cbo_trainSeat.SelectedIndex][j].dic[tk.k[i]];
+                        }
+                        catch
+                        {
+                            if (ToString(tk.k[i]).Equals(ToString(f.trains[cbo_trainSeat.SelectedIndex][j].st[k])))
+                                c += f.trains[cbo_trainSeat.SelectedIndex][j].dic[(SeatType)Enum.Parse(typeof(SeatType), tk.k[i].ToString() + "C")];
+                        }
+                    }
+                }
+                try
+                {
+                    b = int.Parse(dgv_tickets.Rows[i].Cells[1].Value.ToString());
+                }
+                catch
+                {
+                    b = c;
+                }
+                if (b > c)
+                    b = c;
+                tkl[de1][tk.k[i]] = b;
+            }
+            for (int i = 0; i < tk.k.Count; i++)
+                dgv_tickets.Rows[i].Cells[1].Value = tk[tk.k[i]];
+        }
+        private void btn_findrab_Click(object sender, EventArgs e)
+        {
+            Process.Start("https://space.bilibili.com/621814881");
+        }
+        private void btn_fuckntf_Click(object sender, EventArgs e)
+        {
+            if (lbx_ntfs.SelectedIndex != -1)
+            {
+                if (lbx_ntfs.Items[0].ToString() == "反火车迷攻击数据网站导致数据网站崩溃力~")
+                    return;
+                Process.Start("https://space.bilibili.com/" + lbx_ntfs.Items[lbx_ntfs.SelectedIndex].ToString().Substring(5));
+            }
+        }
+        private void btn_refresh_Click(object sender, EventArgs e)
+        {
+            string html;
+            string[] ntfs;
+            lbx_ntfs.Items.Clear();
+            try
+            {
+                html = Gethtml("https://raildatas.github.io/2^9+1.html", 0).Replace("\r", "");
+                ntfs = html.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < ntfs.Length; i++)
+                {
+                    lbx_ntfs.Items.Add("UID: " + ntfs[i]);
+                }
+            }
+            catch
+            {
+                lbx_ntfs.Items.Clear();
+                lbx_ntfs.Items.Add("反火车迷攻击数据网站导致数据网站崩溃力~");
+            }
         }
         private void mtb_downtime_TextChanged(object sender, EventArgs e)
         {
@@ -3429,8 +4077,6 @@ namespace ELE
             tmp3 = -1;
             for (i = 0; i < dfsis[0].Count; i++)
             {
-                if (i == 47)
-                    i = i;
                 if (dfsis[0][i].line == tmp2)
                     liss[liss.Count - 1].after = dfsis[0][i].before;
                 else if (i > 0)

@@ -23,6 +23,7 @@ namespace ELE
         DGN,
         D,
         ZYC,
-        BZ
+        BZ,
+        UK
     }
 }

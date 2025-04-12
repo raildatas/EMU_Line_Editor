@@ -46,13 +46,15 @@
             this.关于动车线路编辑器AToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.删除DToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.lbl_event = new System.Windows.Forms.Label();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.mtb_downtime = new System.Windows.Forms.MaskedTextBox();
             this.mtb_uptime = new System.Windows.Forms.MaskedTextBox();
             this.cbx_isAstar = new System.Windows.Forms.CheckBox();
             this.tbx_downtime = new System.Windows.Forms.TextBox();
             this.tbx_uptime = new System.Windows.Forms.TextBox();
+            this.tbx_trainNum = new System.Windows.Forms.TextBox();
+            this.tbx_before = new System.Windows.Forms.TextBox();
             this.btn_down = new System.Windows.Forms.Button();
             this.btn_up = new System.Windows.Forms.Button();
             this.btn_downtim = new System.Windows.Forms.Label();
@@ -74,12 +76,10 @@
             this.cbo_after = new System.Windows.Forms.ComboBox();
             this.cbo_line = new System.Windows.Forms.ComboBox();
             this.cbx_no350mode = new System.Windows.Forms.CheckBox();
-            this.tbx_trainNum = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.cbo_rcp = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.btn_submit = new System.Windows.Forms.Button();
-            this.tbx_before = new System.Windows.Forms.TextBox();
             this.lbx_list = new System.Windows.Forms.ListBox();
             this.label5 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
@@ -89,11 +89,24 @@
             this.label2 = new System.Windows.Forms.Label();
             this.cbo_trainType = new System.Windows.Forms.ComboBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.lbl_event = new System.Windows.Forms.Label();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.button1 = new System.Windows.Forms.Button();
+            this.dgv_tickets = new System.Windows.Forms.DataGridView();
+            this.col_seat = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.col_tickets = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.lbx_lis = new System.Windows.Forms.ListBox();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.lbx_ntfs = new System.Windows.Forms.ListBox();
+            this.btn_fuckntf = new System.Windows.Forms.Button();
+            this.btn_refresh = new System.Windows.Forms.Button();
+            this.btn_findrab = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabControl1.SuspendLayout();
+            this.tabPage2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgv_tickets)).BeginInit();
+            this.tabPage3.SuspendLayout();
             this.SuspendLayout();
             // 
             // menuStrip1
@@ -207,11 +220,11 @@
             resources.ApplyResources(this.删除DToolStripMenuItem, "删除DToolStripMenuItem");
             this.删除DToolStripMenuItem.Click += new System.EventHandler(this.删除DToolStripMenuItem_Click);
             // 
-            // tabPage3
+            // lbl_event
             // 
-            resources.ApplyResources(this.tabPage3, "tabPage3");
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.UseVisualStyleBackColor = true;
+            resources.ApplyResources(this.lbl_event, "lbl_event");
+            this.lbl_event.ForeColor = System.Drawing.Color.Red;
+            this.lbl_event.Name = "lbl_event";
             // 
             // tabPage1
             // 
@@ -220,6 +233,8 @@
             this.tabPage1.Controls.Add(this.cbx_isAstar);
             this.tabPage1.Controls.Add(this.tbx_downtime);
             this.tabPage1.Controls.Add(this.tbx_uptime);
+            this.tabPage1.Controls.Add(this.tbx_trainNum);
+            this.tabPage1.Controls.Add(this.tbx_before);
             this.tabPage1.Controls.Add(this.btn_down);
             this.tabPage1.Controls.Add(this.btn_up);
             this.tabPage1.Controls.Add(this.btn_downtim);
@@ -241,12 +256,10 @@
             this.tabPage1.Controls.Add(this.cbo_after);
             this.tabPage1.Controls.Add(this.cbo_line);
             this.tabPage1.Controls.Add(this.cbx_no350mode);
-            this.tabPage1.Controls.Add(this.tbx_trainNum);
             this.tabPage1.Controls.Add(this.label6);
             this.tabPage1.Controls.Add(this.cbo_rcp);
             this.tabPage1.Controls.Add(this.label1);
             this.tabPage1.Controls.Add(this.btn_submit);
-            this.tabPage1.Controls.Add(this.tbx_before);
             this.tabPage1.Controls.Add(this.lbx_list);
             this.tabPage1.Controls.Add(this.label5);
             this.tabPage1.Controls.Add(this.label4);
@@ -291,6 +304,17 @@
             resources.ApplyResources(this.tbx_uptime, "tbx_uptime");
             this.tbx_uptime.Name = "tbx_uptime";
             this.tbx_uptime.ReadOnly = true;
+            // 
+            // tbx_trainNum
+            // 
+            resources.ApplyResources(this.tbx_trainNum, "tbx_trainNum");
+            this.tbx_trainNum.Name = "tbx_trainNum";
+            this.tbx_trainNum.LostFocus += new System.EventHandler(this.textbox4_LostFocus);
+            // 
+            // tbx_before
+            // 
+            resources.ApplyResources(this.tbx_before, "tbx_before");
+            this.tbx_before.Name = "tbx_before";
             // 
             // btn_down
             // 
@@ -425,12 +449,6 @@
             this.cbx_no350mode.UseVisualStyleBackColor = true;
             this.cbx_no350mode.CheckedChanged += new System.EventHandler(this.cbx_no350mode_CheckedChanged);
             // 
-            // tbx_trainNum
-            // 
-            resources.ApplyResources(this.tbx_trainNum, "tbx_trainNum");
-            this.tbx_trainNum.Name = "tbx_trainNum";
-            this.tbx_trainNum.LostFocus += new System.EventHandler(this.textbox4_LostFocus);
-            // 
             // label6
             // 
             resources.ApplyResources(this.label6, "label6");
@@ -455,11 +473,6 @@
             this.btn_submit.Name = "btn_submit";
             this.btn_submit.UseVisualStyleBackColor = true;
             this.btn_submit.Click += new System.EventHandler(this.btn_submit_Click);
-            // 
-            // tbx_before
-            // 
-            resources.ApplyResources(this.tbx_before, "tbx_before");
-            this.tbx_before.Name = "tbx_before";
             // 
             // lbx_list
             // 
@@ -515,15 +528,95 @@
             // 
             resources.ApplyResources(this.tabControl1, "tabControl1");
             this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
             // 
-            // lbl_event
+            // tabPage2
             // 
-            resources.ApplyResources(this.lbl_event, "lbl_event");
-            this.lbl_event.ForeColor = System.Drawing.Color.Red;
-            this.lbl_event.Name = "lbl_event";
+            this.tabPage2.Controls.Add(this.button1);
+            this.tabPage2.Controls.Add(this.dgv_tickets);
+            this.tabPage2.Controls.Add(this.lbx_lis);
+            resources.ApplyResources(this.tabPage2, "tabPage2");
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // button1
+            // 
+            resources.ApplyResources(this.button1, "button1");
+            this.button1.Name = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // dgv_tickets
+            // 
+            this.dgv_tickets.AllowUserToAddRows = false;
+            this.dgv_tickets.AllowUserToDeleteRows = false;
+            this.dgv_tickets.BackgroundColor = System.Drawing.SystemColors.Control;
+            this.dgv_tickets.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgv_tickets.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.col_seat,
+            this.col_tickets});
+            resources.ApplyResources(this.dgv_tickets, "dgv_tickets");
+            this.dgv_tickets.Name = "dgv_tickets";
+            this.dgv_tickets.RowTemplate.Height = 27;
+            // 
+            // col_seat
+            // 
+            resources.ApplyResources(this.col_seat, "col_seat");
+            this.col_seat.Name = "col_seat";
+            this.col_seat.ReadOnly = true;
+            // 
+            // col_tickets
+            // 
+            resources.ApplyResources(this.col_tickets, "col_tickets");
+            this.col_tickets.Name = "col_tickets";
+            // 
+            // lbx_lis
+            // 
+            this.lbx_lis.FormattingEnabled = true;
+            resources.ApplyResources(this.lbx_lis, "lbx_lis");
+            this.lbx_lis.Name = "lbx_lis";
+            this.lbx_lis.SelectedIndexChanged += new System.EventHandler(this.lbx_lis_SelectedIndexChanged);
+            // 
+            // tabPage3
+            // 
+            this.tabPage3.Controls.Add(this.lbx_ntfs);
+            this.tabPage3.Controls.Add(this.btn_fuckntf);
+            this.tabPage3.Controls.Add(this.btn_refresh);
+            this.tabPage3.Controls.Add(this.btn_findrab);
+            resources.ApplyResources(this.tabPage3, "tabPage3");
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // lbx_ntfs
+            // 
+            this.lbx_ntfs.FormattingEnabled = true;
+            resources.ApplyResources(this.lbx_ntfs, "lbx_ntfs");
+            this.lbx_ntfs.Name = "lbx_ntfs";
+            this.lbx_ntfs.DoubleClick += new System.EventHandler(this.btn_fuckntf_Click);
+            // 
+            // btn_fuckntf
+            // 
+            resources.ApplyResources(this.btn_fuckntf, "btn_fuckntf");
+            this.btn_fuckntf.Name = "btn_fuckntf";
+            this.btn_fuckntf.UseVisualStyleBackColor = true;
+            this.btn_fuckntf.Click += new System.EventHandler(this.btn_fuckntf_Click);
+            // 
+            // btn_refresh
+            // 
+            resources.ApplyResources(this.btn_refresh, "btn_refresh");
+            this.btn_refresh.Name = "btn_refresh";
+            this.btn_refresh.UseVisualStyleBackColor = true;
+            this.btn_refresh.Click += new System.EventHandler(this.btn_refresh_Click);
+            // 
+            // btn_findrab
+            // 
+            resources.ApplyResources(this.btn_findrab, "btn_findrab");
+            this.btn_findrab.Name = "btn_findrab";
+            this.btn_findrab.UseVisualStyleBackColor = true;
+            this.btn_findrab.Click += new System.EventHandler(this.btn_findrab_Click);
             // 
             // Form1
             // 
@@ -535,6 +628,7 @@
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
             this.Name = "Form1";
+            this.ShowIcon = false;
             this.Load += new System.EventHandler(this.Form1_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -542,6 +636,9 @@
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             this.tabControl1.ResumeLayout(false);
+            this.tabPage2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dgv_tickets)).EndInit();
+            this.tabPage3.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -558,10 +655,46 @@
         private System.Windows.Forms.ToolStripMenuItem 退出XToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem 删除DToolStripMenuItem;
-        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.Label lbl_event;
+        private System.Windows.Forms.ToolStripMenuItem bll文件BToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 车内PIDS文件LToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 设置CToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 关于AToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 帮助HToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 关于动车线路编辑器AToolStripMenuItem;
         private System.Windows.Forms.TabPage tabPage1;
-        private System.Windows.Forms.Button btn_submit;
+        private System.Windows.Forms.MaskedTextBox mtb_downtime;
+        private System.Windows.Forms.MaskedTextBox mtb_uptime;
+        private System.Windows.Forms.CheckBox cbx_isAstar;
+        private System.Windows.Forms.TextBox tbx_downtime;
+        private System.Windows.Forms.TextBox tbx_uptime;
+        private System.Windows.Forms.TextBox tbx_trainNum;
         private System.Windows.Forms.TextBox tbx_before;
+        private System.Windows.Forms.Button btn_down;
+        private System.Windows.Forms.Button btn_up;
+        private System.Windows.Forms.Label btn_downtim;
+        private System.Windows.Forms.Label btn_uptim;
+        private System.Windows.Forms.MaskedTextBox tbx_etim;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.RadioButton rb_exp;
+        private System.Windows.Forms.RadioButton rb_max;
+        private System.Windows.Forms.RadioButton rb_atp;
+        private System.Windows.Forms.MaskedTextBox tbx_afterstop;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.MaskedTextBox tbx_beforestop;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.CheckBox cbx_afterteg;
+        private System.Windows.Forms.CheckBox cbx_beforeteg;
+        private System.Windows.Forms.ComboBox cbo_after;
+        private System.Windows.Forms.ComboBox cbo_line;
+        private System.Windows.Forms.CheckBox cbx_no350mode;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.ComboBox cbo_rcp;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btn_submit;
         private System.Windows.Forms.ListBox lbx_list;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label4;
@@ -571,43 +704,17 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ComboBox cbo_trainType;
         private System.Windows.Forms.TabControl tabControl1;
-        private System.Windows.Forms.ComboBox cbo_rcp;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox tbx_trainNum;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.CheckBox cbx_no350mode;
-        private System.Windows.Forms.ComboBox cbo_after;
-        private System.Windows.Forms.ComboBox cbo_line;
-        private System.Windows.Forms.Label lbl_event;
-        private System.Windows.Forms.CheckBox cbx_afterteg;
-        private System.Windows.Forms.CheckBox cbx_beforeteg;
-        private System.Windows.Forms.MaskedTextBox tbx_beforestop;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.MaskedTextBox tbx_afterstop;
-        private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.RadioButton rb_exp;
-        private System.Windows.Forms.RadioButton rb_max;
-        private System.Windows.Forms.MaskedTextBox tbx_etim;
-        private System.Windows.Forms.Label label11;
-        private System.Windows.Forms.Label label12;
-        private System.Windows.Forms.Label btn_downtim;
-        private System.Windows.Forms.Label btn_uptim;
-        private System.Windows.Forms.Button btn_down;
-        private System.Windows.Forms.Button btn_up;
-        private System.Windows.Forms.TextBox tbx_downtime;
-        private System.Windows.Forms.TextBox tbx_uptime;
-        private System.Windows.Forms.ToolStripMenuItem bll文件BToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem 车内PIDS文件LToolStripMenuItem;
-        private System.Windows.Forms.CheckBox cbx_isAstar;
-        private System.Windows.Forms.ToolStripMenuItem 设置CToolStripMenuItem;
-        private System.Windows.Forms.MaskedTextBox mtb_uptime;
-        private System.Windows.Forms.MaskedTextBox mtb_downtime;
-        private System.Windows.Forms.RadioButton rb_atp;
-        private System.Windows.Forms.ToolStripMenuItem 关于AToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem 帮助HToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem 关于动车线路编辑器AToolStripMenuItem;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.DataGridView dgv_tickets;
+        private System.Windows.Forms.ListBox lbx_lis;
+        private System.Windows.Forms.DataGridViewTextBoxColumn col_seat;
+        private System.Windows.Forms.DataGridViewTextBoxColumn col_tickets;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.Button btn_fuckntf;
+        private System.Windows.Forms.Button btn_refresh;
+        private System.Windows.Forms.Button btn_findrab;
+        private System.Windows.Forms.ListBox lbx_ntfs;
     }
 }
 
