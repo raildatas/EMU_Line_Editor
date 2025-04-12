@@ -1,6 +1,7 @@
 package com.example.editor;
 
 import static java.lang.Math.ceil;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -30,9 +31,15 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import com.example.myapplication.R;
+import org.apache.commons.net.ftp.FTPClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.*;
@@ -41,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     boolean select = false;
     boolean flag = true;
     int upmin = 6, uphour = 10, downmin = 6, downhour = 10;
-    int selectB = -1, selectL = -1, selectA = -1, selectC = -1;
+    int selectB = -1, selectL = -1, selectA = -1, selectC = -1, selectQ = -1, selectS = -1, selectLQ;
     List<String> emus = new List<>();
     Dictionary<String, String> dic = new Dictionary<>();
     Dictionary<String, String> dic2 = new Dictionary<>();
@@ -54,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     String train = "";
     String ver = "";
     List<ListItem> lis = new List<>();
-    String upTime = "", downTime = "";
+    String upTime = "", downTime = "", tmpLi;
     String[] rcps = new String[0];
     String appdir;
     List<List<DFSItem>> dfsis = new List<List<DFSItem>>();
@@ -62,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     double lat, lng = lat = -1;
     int num = 0;
     List<int[]> visit = new List<int[]>();
+    Dictionary<String, Ticket> tkl = new Dictionary<>();
     private static double EARTH_RADIUS = 6378137;
 
     private static double rad(double d) {
@@ -76,6 +84,66 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         s = s * EARTH_RADIUS;
         s = Math.round(s * 10000) / 10000;
         return s / 1000.0;
+    }
+    public String ToString(SeatType st) {
+        switch(st)
+        {
+            case ZE:
+                return "二等座";
+            case D:
+                return "动力车";
+            case CA:
+                return "餐车";
+            case WG:
+                return "高级动卧";
+            case WR:
+                return "动卧";
+            case WY:
+                return "一等卧";
+            case WE:
+                return "二等卧";
+            case ZEC:
+                return "二等座";
+            case SW:
+                return "商务座";
+            case DGN:
+                return "多功能座";
+            case UY:
+                return "优选一等座";
+            case ZY:
+                return "一等座";
+            case ZT:
+                return "特等座";
+            case ZYC:
+                return "一等座";
+            case WRC:
+                return "动卧";
+            case BZ:
+                return "标准座";
+            default:
+                return "未知席别";
+        }
+    }
+    public SeatType ToST(String st) {
+        switch (st) {
+            case "CA": return SeatType.CA;
+            case "ZE": return SeatType.ZE;
+            case "ZY": return SeatType.ZY;
+            case "ZT": return SeatType.ZT;
+            case "SW": return SeatType.SW;
+            case "WG": return SeatType.WG;
+            case "WR": return SeatType.WR;
+            case "WY": return SeatType.WY;
+            case "WE": return SeatType.WE;
+            case "ZEC": return SeatType.ZEC;
+            case "WRC": return SeatType.WRC;
+            case "UY": return SeatType.UY;
+            case "DGN": return SeatType.DGN;
+            case "D": return SeatType.D;
+            case "ZYC": return SeatType.ZYC;
+            case "BZ": return SeatType.BZ;
+        }
+        return  SeatType.D;
     }
     public String Gethtml(String url, int delay) throws IOException {//爬虫
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
@@ -147,6 +215,16 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             //ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.MANAGE_DOCUMENTS}, 4);
             //ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND}, 4);
         }
+        if((Calendar.getInstance().getTime().getYear() == 125) && (Calendar.getInstance().getTime().getMonth() == 3) && (Calendar.getInstance().getTime().getDate() <= 12)) {
+            if((Calendar.getInstance().getTime().getDate() == 12) && (Calendar.getInstance().getTime().getHours() < 18)) {
+                ((Button) findViewById(R.id.btn_ntfs)).setEnabled(false);
+                ((Button) findViewById(R.id.btn_ntfs)).setVisibility(View.GONE);
+            }
+            else if(Calendar.getInstance().getTime().getDate() < 12) {
+                ((Button) findViewById(R.id.btn_ntfs)).setEnabled(false);
+                ((Button) findViewById(R.id.btn_ntfs)).setVisibility(View.GONE);
+            }
+        }
         ((EditText)(findViewById(R.id.et_trainNumber))).setOnFocusChangeListener((v, hasFocus) -> {
             if(!hasFocus) {
                 ((EditText)(findViewById(R.id.et_trainNumber))).setText(((EditText)(findViewById(R.id.et_trainNumber))).getText().toString().toUpperCase());
@@ -191,7 +269,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                         .replace("5","").replace("4","")
                         .replace("/","").replace(" ","").length() == 0);
                 if(b == false)
-                    ((EditText)(findViewById(R.id.et_trainNumber))).setText("D301 D302".toCharArray(),0,2);
+                    ((EditText)(findViewById(R.id.et_trainNumber))).setText("D303 D304");
             }
         });
             if(!flag)
@@ -406,11 +484,13 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     for(int j = 0;j < spdstrs.length;j++)
                     {
                         if (spdstrs[j].startsWith("1") || spdstrs[j].startsWith("2") || spdstrs[j].startsWith("3") || spdstrs[j].startsWith("4") || spdstrs[j].startsWith("5") ||
-                                spdstrs[j].startsWith("6") || spdstrs[j].startsWith("7") || spdstrs[j].startsWith("8") || spdstrs[j].startsWith("9"))
-                        {
+                                spdstrs[j].startsWith("6") || spdstrs[j].startsWith("7") || spdstrs[j].startsWith("8") || spdstrs[j].startsWith("9")) {
                             spdstrs[j] = "atp " + spdstrs[j] + "\n" +
                                     "ms " + spdstrs[j] + "\n" +
                                     "ss " + spdstrs[j];
+                        }
+                        if(spdstrs[j].startsWith("ms") && (!(spdstrs[j].startsWith("atp") || spdstrs[j].startsWith("atp")))) {
+                            spdstrs[j] = "atp " + spdstrs[j].split(" ")[1] + "\n" + spdstrs[j];
                         }
                     }
                     Share.rails.get(i).speeds = "";
@@ -426,6 +506,13 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 //System.exit(1);
             }
             flag = false;
+            /*String rd = "";
+            try {
+                rd = DownloadFTP("emudata.html");
+            }
+            catch (Exception e) {
+
+            }*/
         ((EditText)(findViewById(R.id.et_before))).setOnFocusChangeListener(this);
         ((EditText)findViewById(R.id.sw_no_after)).addTextChangedListener(new TextWatcher() {
             @Override
@@ -601,6 +688,9 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             ((RadioButton)findViewById(R.id.rb_slow)).setChecked(true);
             SetTime();
         }
+        if(lis.size() == 0) {
+            Clear();
+        }
     }
     private void Update() {
         StringBuilder sb = new StringBuilder();
@@ -687,6 +777,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                         }
                                         else
                                             ((Switch)(findViewById(R.id.sw_double))).setEnabled(true);
+                                        Clear();
                                         SetTime();
                                         dialog.cancel();
                                     }
@@ -967,6 +1058,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         ((Switch)findViewById(R.id.sw_after_tst)).setChecked(false);
         ((RadioButton)findViewById(R.id.rb_slow)).setChecked(true);
         ((EditText)findViewById(R.id.sw_no_after)).setEnabled(true);
+        ((Button)findViewById(R.id.sp_li)).setEnabled(true);
         SetTime();
     }
     protected void SetTime() {
@@ -975,6 +1067,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         downTime = CalcTime(downmin, downhour, false);
         ((TextView)findViewById(R.id.tv_downtime)).setText(downTime);
     }
+    //file
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -1100,6 +1193,61 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 }
                 //progressDialog2.setProgress(//progressDialog.getProgress() + 1);
             }
+            List<String> stas = new List<String>();
+            List<String> ls = new List<>();
+            for(int i = 0; i < lis.size(); i++)
+                if (!((lis.get(i).beforestop == 0) || lis.get(i).beforeteg))
+                    stas.Add(Share.stations.get(lis.get(i).before).name);
+            if (!((lis.get(lis.size() - 1).afterstop == 0) || lis.get(lis.size() - 1).afterteg))
+                stas.Add(Share.stations.get(lis.get(lis.size() - 1).after).name);
+            for (int i = 0; i < stas.size(); i++)
+                for (int j = 0; j < stas.size(); j++)
+                    if (!stas.get(i).equals(stas.get(j)))
+                        ls.Add(stas.get(i) + " → " + stas.get(j));
+            Ticket tk = null;
+            sb2.append("\n--END--");
+            for(int i = 0;i < ls.size();i++) {
+                sb2.append("\n");
+                tk = tkl.GetE(ls.get(i));
+                if(tk == null) {
+                    List<SeatType> sts = new List<>();
+                    boolean b = false;
+                    for(EMU e : Share.emus) {
+                        if(e.name.equals(train)) {
+                            for(int j = 0;j < e.trains.size();j++) {
+                                if(e.versions.get(j).equals(ver)) {
+                                    for (Train car : e.trains.get(j)) {
+                                        for(SeatType s:car.dic.key) {
+                                            b = false;
+                                            for (SeatType ts : sts) {
+                                                b = b || ToString(ts).equals(ToString(s));
+                                            }
+                                            if(!b)
+                                                sts.add(s);
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    SeatType[] sa = new SeatType[sts.size()];
+                    for (int j = 0; j < sts.size(); j++) {
+                        sa[j] = sts.get(j);
+                    }
+                    tk = new Ticket(sa);
+                }
+                sb2.append(ls.get(i).split(" ")[0]);
+                sb2.append(" ");
+                sb2.append(ls.get(i).split(" ")[2]);
+                for(int j = 0;j < tk.key.size();j++) {
+                    sb2.append(" ");
+                    sb2.append(tk.key.get(j).toString());
+                    sb2.append("-");
+                    sb2.append(Integer.toString(tk.GetE(tk.key.get(j))));
+                }
+            }
             try {
                 File.WriteAllText(path, sb2.toString());
                 new AlertDialog.Builder(this)
@@ -1125,90 +1273,93 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         }
         else if(requestCode == 6 && resultCode == Activity.RESULT_OK) { //open
             try {
-                    String s = File.ReadAllText(data.getData().getPath().replace("/document/primary:", "/storage/emulated/0/"));
-                    String[] str = s
-                        .replace("\r", "").split("\n");
-                    String[] strs, sts;
-                    int MAX_PROGRESS = str.length + 2;
-                    //progressDialog //progressDialog =
-                        //new //progressDialog(MainActivity.this);
-                    //progressDialog.setProgress(0);
-                    //progressDialog.setTitle("正在读取中……");
-                    //progressDialog.setProgressStyle(//progressDialog.STYLE_HORIZONTAL);
-                    //progressDialog.setMax(MAX_PROGRESS);
-                    //progressDialog.show();
-                    lis.clear();
-                    boolean b7;
-                    ListItem li;
-                    uptimes = new List<>();
-                    downtimes = new List<>();
-                    for(int i = 0; i < rcps.length;i++) {
-                        if(rcps[i].equals(str[0])) {
-                            selectC = i;
-                            ((Button)findViewById(R.id.sp_rcp)).setText(rcps[i]);
-                            break;
-                        }
-                        if (i == rcps.length - 1)
-                            throw new Exception("版本不兼容");
+                String s = File.ReadAllText(data.getData().getPath().replace("/document/primary:", "/storage/emulated/0/"));
+                String[] str = s.replace("\r", "").split("\n");
+                String[] strs, sts;
+                int MAX_PROGRESS = str.length + 2;
+                int x = 7;
+                //progressDialog //progressDialog =
+                    //new //progressDialog(MainActivity.this);
+                //progressDialog.setProgress(0);
+                //progressDialog.setTitle("正在读取中……");
+                //progressDialog.setProgressStyle(//progressDialog.STYLE_HORIZONTAL);
+                //progressDialog.setMax(MAX_PROGRESS);
+                //progressDialog.show();
+                lis.clear();
+                boolean b7;
+                ListItem li;
+                uptimes = new List<>();
+                downtimes = new List<>();
+                for(int i = 0; i < rcps.length;i++) {
+                    if(rcps[i].equals(str[0])) {
+                         selectC = i;
+                         ((Button)findViewById(R.id.sp_rcp)).setText(rcps[i]);
+                         break;
                     }
-                    strs = str[1].split(" ");
-                    uphour = Integer.valueOf(strs[0]);
-                    upmin = Integer.valueOf(strs[1]);
-                    String tmp1 = upmin<10?"0"+Integer.toString(upmin):Integer.toString(upmin);
-                    String tmp2 = uphour<10?"0"+Integer.toString(uphour):Integer.toString(uphour);
-                    ((TextView)(findViewById(R.id.tv_upstart))).setText(tmp2+":"+tmp1);
-                    strs = str[2].split(" ");
-                    downhour = Integer.valueOf(strs[0]);
-                    downmin = Integer.valueOf(strs[1]);
-                    tmp1 = downmin<10?"0"+Integer.toString(downmin):Integer.toString(downmin);
-                    tmp2 = downhour<10?"0"+Integer.toString(downhour):Integer.toString(downhour);
-                    ((TextView)(findViewById(R.id.tv_downstart))).setText(tmp2+":"+tmp1);
-                    //progressDialog.setProgress(//progressDialog.getProgress() + 1);
-                    train = str[3];
-                    ver = str[4];
-                    ((Button)findViewById(R.id.sp_emu)).setText(train + "(" + this.ver + ")");
-                    int tmp5 = 0, which = 0;
-                    for(EMU emu:Share.emus) {
-                        if(train.equals(emu.name))
-                            break;
-                        tmp5++;
+                    if (i == rcps.length - 1)
+                        throw new Exception("版本不兼容");
                     }
-                    for(String v:Share.emus.get(tmp5).versions) {
-                        if(v.equals(ver))
-                            break;
-                        which++;
-                    }
-                    if(Share.emus.get(tmp5).trains.get(which).size() > 9) {
-                        ((Switch) (findViewById(R.id.sw_double))).setEnabled(false);
-                        ((Switch) (findViewById(R.id.sw_double))).setChecked(false);
-                    }
+                strs = str[1].split(" ");
+                uphour = Integer.valueOf(strs[0]);
+                upmin = Integer.valueOf(strs[1]);
+                String tmp1 = upmin<10?"0"+Integer.toString(upmin):Integer.toString(upmin);
+                String tmp2 = uphour<10?"0"+Integer.toString(uphour):Integer.toString(uphour);
+                ((TextView)(findViewById(R.id.tv_upstart))).setText(tmp2+":"+tmp1);
+                strs = str[2].split(" ");
+                downhour = Integer.valueOf(strs[0]);
+                downmin = Integer.valueOf(strs[1]);
+                tmp1 = downmin<10?"0"+Integer.toString(downmin):Integer.toString(downmin);
+                tmp2 = downhour<10?"0"+Integer.toString(downhour):Integer.toString(downhour);
+                ((TextView)(findViewById(R.id.tv_downstart))).setText(tmp2+":"+tmp1);
+                //progressDialog.setProgress(//progressDialog.getProgress() + 1);
+                train = str[3];
+                ver = str[4];
+                ((Button)findViewById(R.id.sp_emu)).setText(train + "(" + this.ver + ")");
+                int tmp5 = 0, which = 0;
+                for(EMU emu:Share.emus) {
+                    if(train.equals(emu.name))
+                        break;
+                    tmp5++;
+                }
+                for(String v:Share.emus.get(tmp5).versions) {
+                    if(v.equals(ver))
+                        break;
+                    which++;
+                }
+                if(Share.emus.get(tmp5).trains.get(which).size() > 9) {
+                    ((Switch) (findViewById(R.id.sw_double))).setEnabled(false);
+                    ((Switch) (findViewById(R.id.sw_double))).setChecked(false);
+                }
+                else
+                    ((Switch)(findViewById(R.id.sw_double))).setEnabled(true);
+                sts = str[5].split(" ");
+                if (sts.length == 2) {
+                    if(sts[0].equals("t"))
+                        ((Switch)findViewById(R.id.sw_double)).setChecked(true);
                     else
-                        ((Switch)(findViewById(R.id.sw_double))).setEnabled(true);
-                    sts = str[5].split(" ");
-                    if (sts.length == 2) {
-                        if(sts[0].equals("t"))
-                            ((Switch)findViewById(R.id.sw_double)).setChecked(true);
-                        else
-                            ((Switch)findViewById(R.id.sw_double)).setChecked(false);
-                        if(sts[1].equals("t"))
-                            ((Switch)findViewById(R.id.sw_no350mode)).setChecked(true);
-                        else
-                            ((Switch)findViewById(R.id.sw_no350mode)).setChecked(false);
-                    }
+                        ((Switch)findViewById(R.id.sw_double)).setChecked(false);
+                    if(sts[1].equals("t"))
+                        ((Switch)findViewById(R.id.sw_no350mode)).setChecked(true);
                     else
-                    {
-                        if(str[5].equals("t"))
-                            ((Switch)findViewById(R.id.sw_double)).setChecked(true);
-                        else
-                            ((Switch)findViewById(R.id.sw_double)).setChecked(false);
                         ((Switch)findViewById(R.id.sw_no350mode)).setChecked(false);
+                }
+                else
+                {
+                    if(str[5].equals("t"))
+                        ((Switch)findViewById(R.id.sw_double)).setChecked(true);
+                    else
+                        ((Switch)findViewById(R.id.sw_double)).setChecked(false);
+                    ((Switch)findViewById(R.id.sw_no350mode)).setChecked(false);
+                }
+                ((EditText)findViewById(R.id.et_trainNumber)).setText(str[6]);
+                for (int i = 7;i < str.length;) {
+                    if(str[i].equals("--END--")) {
+                        break;
                     }
-                    ((EditText)findViewById(R.id.et_trainNumber)).setText(str[6]);
-                    for (int i = 7;i < str.length;i++) {
-                        strs = str[i].split(" ");
-                        li = new ListItem(0,0,0,RunMode.MaxSpeed,0,0,0,false, false);
-                        b7 = false;
-                        for (int j = 0; j < Share.stations.size();j++) {
+                    strs = str[i].split(" ");
+                    li = new ListItem(0,0,0,RunMode.MaxSpeed,0,0,0,false, false);
+                    b7 = false;
+                    for (int j = 0; j < Share.stations.size();j++) {
                         if(Share.stations.get(j).name.equals(strs[0])) {
                             li.before = j;
                             b7 = true;
@@ -1222,12 +1373,12 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                                     break;
                                 }
                             }
-                        }
+                            }
                     }
-                        if(!b7)
-                            throw new Exception("版本不兼容");
-                        b7 = false;
-                        for (int j = 0; j < Share.stations.size();j++) {
+                    if(!b7)
+                        throw new Exception("版本不兼容");
+                    b7 = false;
+                    for (int j = 0; j < Share.stations.size();j++) {
                         if(Share.stations.get(j).name.equals(strs[2])) {
                             li.after = j;
                             b7 = true;
@@ -1243,10 +1394,10 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                             }
                         }
                     }
-                        if(!b7)
-                            throw new Exception("版本不兼容");
-                        b7 = false;
-                        for (int j = 0; j < Share.rails.size();j++) {
+                    if(!b7)
+                        throw new Exception("版本不兼容");
+                    b7 = false;
+                    for (int j = 0; j < Share.rails.size();j++) {
                         if(Share.rails.get(j).name.equals(strs[1])) {
                             li.line = j;
                             b7 = true;
@@ -1262,57 +1413,92 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                             }
                         }
                     }
-                        if(!b7)
-                            throw new Exception("版本不兼容");
-                        li.afterstop = Integer.valueOf(strs[5]);
-                        li.beforestop = Integer.valueOf(strs[3]);
-                        li.beforeteg = strs[4].equals("t")?true:false;
-                        li.afterteg = strs[6].equals("t")?true:false;
-                        li.earlytime = Integer.valueOf(strs[7]);
-                        switch (strs[8]) {
-                            case "a":
-                                li.mode = RunMode.MaxSpeed;
-                                break;
-                            case "m":
-                                li.mode = RunMode.MaxSpeed;
-                                break;
-                            case "s":
-                                li.mode = RunMode.Express;
-                                break;
+                    if(!b7)
+                        throw new Exception("版本不兼容");
+                    li.afterstop = Integer.valueOf(strs[5]);
+                    li.beforestop = Integer.valueOf(strs[3]);
+                    li.beforeteg = strs[4].equals("t")?true:false;
+                    li.afterteg = strs[6].equals("t")?true:false;
+                    li.earlytime = Integer.valueOf(strs[7]);
+                    switch (strs[8]) {
+                        case "a":
+                            li.mode = RunMode.MaxSpeed;
+                            break;
+                        case "m":
+                            li.mode = RunMode.MaxSpeed;
+                            break;
+                        case "s":
+                            li.mode = RunMode.Express;
+                            break;
+                    }
+                    selectB = li.after;
+                    lis.add(li);
+                    x = ++i;
+                    //progressDialog.setProgress(//progressDialog.getProgress() + 1);
+                }
+                tkl.Clear();
+                if(x < str.length) {
+                    ++x;
+                    String list = "";
+                    Ticket tk = null;
+                    String[] sss;
+                    List<SeatType> st = new List<>();
+                    SeatType[] sets;
+                    for (int i = x;i < str.length;i++) {
+                        sss = str[i].split(" ");
+                        list = sss[0] + " → " + sss[1];
+                        for(int j = 2; j < sss.length; j++) {
+                            st.add(ToST(sss[j].split("-")[0]));
                         }
-                        selectB = li.after;
-                        lis.add(li);
-                        //progressDialog.setProgress(//progressDialog.getProgress() + 1);
+                        sets = new SeatType[st.size()];
+                        for(int j = 0;j < st.size();j++) {
+                            sets[j] = st.get(j);
+                        }
+                        tk = new Ticket(sets);
+                        for(int j = 2; j < sss.length; j++) {
+                            tk.SetE(ToST(sss[j].split("-")[0]), Integer.valueOf(sss[j].split("-")[1]));
+                        }
+                        tkl.Add(list, tk);
                     }
-                    ((Button)(findViewById(R.id.btn_save))).setEnabled(true);
-                    ((Button)(findViewById(R.id.btn_out))).setEnabled(true);
-                    selectA = -1;
-                    selectL = -1;
-                    if(select)
-                    {
-                        select = false;
-                        ((Button)(findViewById(R.id.btn_up))).setBackgroundTintList(ColorStateList.valueOf(
-                                ContextCompat.getColor(this,R.color.CRH)));
-                        ((Button)(findViewById(R.id.btn_down))).setBackgroundTintList(ColorStateList.valueOf(
-                                ContextCompat.getColor(this,R.color.E_Train)));
-                    }
-                    Update();
-                    SetTime();
-                    ((EditText)(findViewById(R.id.et_before))).setText(Share.stations.get(selectB).name);
-                    ((Button)(findViewById(R.id.sp_lineName))).setText("");
-                    ((Button)(findViewById(R.id.sp_after))).setText("");
-                    ((Button)(findViewById(R.id.btn_add))).setEnabled(false);
-                    ((Button)(findViewById(R.id.sp_after))).setEnabled(false);
-                    ((EditText)(findViewById(R.id.et_before))).setEnabled(false);
-                    ((EditText)(findViewById(R.id.sw_no_before))).setText(Integer.toString(lis.get(lis.size() - 1).afterstop));
-                    ((EditText)(findViewById(R.id.sw_no_before))).setEnabled(false);
-                    ((EditText)(findViewById(R.id.sw_no_after))).setText("2");
-                    ((Switch)findViewById(R.id.sw_before_tst)).setChecked(((Switch)findViewById(R.id.sw_after_tst)).isChecked());
-                    ((Switch)findViewById(R.id.sw_before_tst)).setEnabled(false);
-                    ((Switch)findViewById(R.id.sw_after_tst)).setChecked(false);
-                    ((RadioButton)findViewById(R.id.rb_slow)).setChecked(true);
-                    //progressDialog.setProgress(MAX_PROGRESS);
-                    //progressDialog.cancel();
+                }
+                selectQ = -1;
+                selectS = -1;
+                ((Button)findViewById(R.id.sp_li)).setEnabled(true);
+                ((Button)findViewById(R.id.btn_yestk)).setEnabled(true);
+                ((Button)findViewById(R.id.sp_li)).setText("");
+                ((Button)findViewById(R.id.sp_ts)).setEnabled(true);
+                ((Button)findViewById(R.id.sp_ts)).setText("");
+                ((EditText)findViewById(R.id.et_tickets)).setEnabled(true);
+                ((EditText)findViewById(R.id.et_tickets)).setText("0");
+                ((Button)(findViewById(R.id.btn_save))).setEnabled(true);
+                ((Button)(findViewById(R.id.btn_out))).setEnabled(true);
+                selectA = -1;
+                selectL = -1;
+                if(select)
+                {
+                    select = false;
+                    ((Button)(findViewById(R.id.btn_up))).setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(this,R.color.CRH)));
+                    ((Button)(findViewById(R.id.btn_down))).setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(this,R.color.E_Train)));
+                }
+                Update();
+                SetTime();
+                ((EditText)(findViewById(R.id.et_before))).setText(Share.stations.get(selectB).name);
+                ((Button)(findViewById(R.id.sp_lineName))).setText("");
+                ((Button)(findViewById(R.id.sp_after))).setText("");
+                ((Button)(findViewById(R.id.btn_add))).setEnabled(false);
+                ((Button)(findViewById(R.id.sp_after))).setEnabled(false);
+                ((EditText)(findViewById(R.id.et_before))).setEnabled(false);
+                ((EditText)(findViewById(R.id.sw_no_before))).setText(Integer.toString(lis.get(lis.size() - 1).afterstop));
+                ((EditText)(findViewById(R.id.sw_no_before))).setEnabled(false);
+                ((EditText)(findViewById(R.id.sw_no_after))).setText("2");
+                ((Switch)findViewById(R.id.sw_before_tst)).setChecked(((Switch)findViewById(R.id.sw_after_tst)).isChecked());
+                ((Switch)findViewById(R.id.sw_before_tst)).setEnabled(false);
+                ((Switch)findViewById(R.id.sw_after_tst)).setChecked(false);
+                ((RadioButton)findViewById(R.id.rb_slow)).setChecked(true);
+                //progressDialog.setProgress(MAX_PROGRESS);
+                //progressDialog.cancel();
             }
             catch (Exception e) {
                 new AlertDialog.Builder(this)
@@ -1352,7 +1538,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         sb.append(tmp1);
         return sb.toString();
     }
-    public void Out(AtomicBoolean isshow, Intent data) {
+    public void Out(AtomicBoolean isshow, @NonNull Intent data) {
         Uri uri = data.getData();
         StringBuilder sb = new StringBuilder();
         JSONArray jArray,j2;
@@ -2054,7 +2240,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                             }
                         }
                         if(//b1 &&
-                           j < lengths.size())
+                                j < lengths.size())
                             length += lengths.get(j);
                     }// if b==true
                     j++;
@@ -2067,6 +2253,333 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         catch (Exception e) {  }
         return sb.toString();
     }
+    /*public int GetLiTime(int before, int line, int after) {
+        boolean b = false, b1 = false, b3 = false;
+        String tmp;
+        List<String> jArray = Share.rails.get(line).stations;
+        List<String> spd = new List<>();
+        List<String> speeds = new List<>();
+        String[] tmp2 = Share.rails.get(line).speeds.split("\n");
+        for (int j = 0; j < tmp2.length; j++) {
+            if ((!tmp2[j].startsWith("atp"))
+                    && (!tmp2[j].startsWith("ms"))
+                    && (!tmp2[j].startsWith("ss"))
+                    && (!tmp2[j].startsWith("1")) && (!tmp2[j].startsWith("2")) && (!tmp2[j].startsWith("3"))
+                    && (!tmp2[j].startsWith("4")) && (!tmp2[j].startsWith("5")) && (!tmp2[j].startsWith("6"))
+                    && (!tmp2[j].startsWith("7")) && (!tmp2[j].startsWith("8")) && (!tmp2[j].startsWith("9")))
+                speeds.add(tmp2[j]);
+            spd.add(tmp2[j]);
+        }
+        int j = 0;
+        for (j = 0; j < jArray.size(); ) {
+            if (jArray.get(j).equals(Share.stations.get(lis.get(i).before).name)) {
+                b = true;
+            }
+            tmp = jArray.get(j);
+            if (jArray.get(j).equals(Share.stations.get(lis.get(i).after).name)) {
+                if (b == false) {
+                    return GetLiTime(after, line, before);
+                }
+                for (String stat:speeds) {
+                    b3 = false;
+                    m = -1;
+                    for (int l = j; l < jArray.size(); l++) {
+                        if (jArray.get(l).equals(stat)) {
+                            m = l;
+                            b3 = true;
+                            break;
+                        }
+                    }
+                    if(jArray.get(j).equals(stat) || b3) {
+                        b2 = false;
+                        aspeed = 0;
+                        for(int k = 0; k < spd.size(); k++) {
+                            if(spd.get(k).equals(stat))
+                                break;
+                            if(spd.get(k).startsWith("1")||spd.get(k).startsWith("2")||
+                                    spd.get(k).startsWith("3")||spd.get(k).startsWith("4")||
+                                    spd.get(k).startsWith("5")||spd.get(k).startsWith("6")||
+                                    spd.get(k).startsWith("7")||spd.get(k).startsWith("8")||
+                                    spd.get(k).startsWith("9")||spd.get(k).startsWith("0"))
+                                _speed = Integer.valueOf(spd.get(k));
+                            else if (spd.get(k).startsWith("ss") && (lis.get(i).mode == RunMode.Express))
+                                _speed = Integer.valueOf(spd.get(k).substring(3));
+                            else if (spd.get(k).startsWith("ms") && (lis.get(i).mode != RunMode.Express) && (b2 != true))
+                                _speed = Integer.valueOf(spd.get(k).substring(3));
+                            else if (spd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.MaxSpeed)) {
+                                _speed = Integer.valueOf(spd.get(k).substring(4));
+                                b2 = true;
+                            }
+                        }
+                        b2 = false;
+                        if(_speed > speed) {
+                            if(speed == 310)
+                                speed += 5;
+                            switch (lis.get(i).mode) {
+                                case ATP:
+                                    _speed = speed - 6;
+                                    break;
+                                case Express:
+                                    _speed = speed - 15; break;
+                                case MaxSpeed:
+                                    _speed = speed - 10;
+                                    break;
+                            }
+                        }
+                        if ((((Switch)findViewById(R.id.sw_no350mode)).isChecked()) && (_speed > 310))
+                            _speed = 305;
+                        //找到下条线路限速
+                                if (i < lis.size() - 1) {
+                                    if (lis.get(i).afterstop == 0) {
+                                        c1 = false;
+                                        c5 = false;
+                                        tpd = new List<>();
+                                        tpeeds = new List<>();
+                                        ump2 = Share.rails.get(lis.get(i + 1).line).speeds.split("\n");
+                                        for (int s = 0; s < ump2.length; s++) {
+                                            if ((!ump2[s].startsWith("atp"))
+                                                    && (!ump2[s].startsWith("ms"))
+                                                    && (!ump2[s].startsWith("ss"))
+                                                    && (!ump2[s].startsWith("1")) && (!ump2[s].startsWith("2")) && (!ump2[s].startsWith("3"))
+                                                    && (!ump2[s].startsWith("4")) && (!ump2[s].startsWith("5")) && (!ump2[s].startsWith("6"))
+                                                    && (!ump2[s].startsWith("7")) && (!ump2[s].startsWith("8")) && (!ump2[s].startsWith("9")))
+                                                tpeeds.add(ump2[s]);
+                                            tpd.add(ump2[s]);
+                                        }
+                                        b1 = false;
+                                        c = false;
+                                        kArray = Share.rails.get(lis.get(i + 1).line).stations;
+                                        mengths = Share.rails.get(lis.get(i + 1).line).lengths;
+                                        for (int n = 0; n < Share.rails.get(lis.get(i + 1).line).stations.size(); n++) {
+                                            if (kArray.get(n).equals(Share.stations.get(lis.get(i + 1).after).name)) {
+                                                if (c == false) {
+                                                    c1 = true;
+                                                    kArray = new List<>();
+                                                    tpd = new List<>();
+                                                    mengths = new List<>();
+                                                    tpeeds = new List<>();
+                                                    for (int t = Share.rails.get(lis.get(i + 1).line).stations.size() - 1; t >= 0; t--)
+                                                        kArray.add(Share.rails.get(lis.get(i + 1).line).stations.get(t));
+                                                    ump2 = Share.rails.get(lis.get(i + 1).line).speeds.split("\n");
+                                                    for (int t = ump2.length - 1; t >= 0; t--) {
+                                                        if ((!ump2[t].startsWith("atp"))
+                                                                && (!ump2[t].startsWith("ms"))
+                                                                && (!ump2[t].startsWith("ss"))
+                                                                && (!ump2[t].startsWith("1")) && (!ump2[t].startsWith("2")) && (!ump2[t].startsWith("3"))
+                                                                && (!ump2[t].startsWith("4")) && (!ump2[t].startsWith("5")) && (!ump2[t].startsWith("6"))
+                                                                && (!ump2[t].startsWith("7")) && (!ump2[t].startsWith("8")) && (!ump2[t].startsWith("9")))
+                                                            tpeeds.add(ump2[t]);
+                                                        tpd.add(ump2[t]);
+                                                    }
+                                                    for (int t = Share.rails.get(lis.get(i + 1).line).lengths.size() - 1; t >= 0; t--)
+                                                        mengths.add(Share.rails.get(lis.get(i + 1).line).lengths.get(t));
+                                                    n = 0;
+                                                    c = false;
+                                                    continue;
+                                                }
+                                                else
+                                                    break;
+                                            }
+                                            if (kArray.get(n).equals(Share.stations.get(lis.get(i + 1).before).name))
+                                                c = true;
+                                            if (c) {
+                                                for (String ttat:tpeeds) {
+                                                    c3 = false;
+                                                    o = -1;
+                                                    for (int l = n; l < kArray.size(); l++) {
+                                                        if (kArray.get(l).equals(ttat)) {
+                                                            o = l;
+                                                            c3 = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                    if((kArray.get(n).equals(ttat) || c3) && (!kArray.get(n).equals(Share.stations.get(lis.get(i + 1).before).name))) {
+                                                        c2 = false;
+                                                        c4 = false;
+                                                        for(int k = 0; k < tpd.size(); k++) {
+                                                            if(tpd.get(k).equals(ttat))
+                                                                break;
+                                                            if(tpd.get(k).startsWith("1")||tpd.get(k).startsWith("2")||
+                                                                    tpd.get(k).startsWith("3")||tpd.get(k).startsWith("4")||
+                                                                    tpd.get(k).startsWith("5")||tpd.get(k).startsWith("6")||
+                                                                    tpd.get(k).startsWith("7")||tpd.get(k).startsWith("8")||
+                                                                    tpd.get(k).startsWith("9")||tpd.get(k).startsWith("0"))
+                                                                aspeed = Integer.valueOf(tpd.get(k));
+                                                            else if (tpd.get(k).startsWith("ss") && (lis.get(i).mode == RunMode.Express))
+                                                                aspeed = Integer.valueOf(tpd.get(k).substring(3));
+                                                            else if (tpd.get(k).startsWith("ms") && (lis.get(i).mode != RunMode.Express) && (c4 != true)) {
+                                                                if((lis.get(i).mode != RunMode.Express))
+                                                                    aspeed = Integer.valueOf(tpd.get(k).substring(3));
+                                                            }
+                                                            else if (tpd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.MaxSpeed)) {
+                                                                aspeed = Integer.valueOf(tpd.get(k).substring(4));
+                                                                c4 = true;
+                                                            }
+                                                        }
+                                                        c2 = false;
+                                                        c4 = false;
+                                                        if(aspeed > speed) {
+                                                            if(speed == 310)
+                                                                speed += 5;
+                                                            switch (lis.get(i).mode) {
+                                                                case ATP:
+                                                                    aspeed = speed - 6;
+                                                                    break;
+                                                                case Express:
+                                                                    aspeed = speed - 15;
+                                                                case MaxSpeed:
+                                                                    aspeed = speed - 10;
+                                                                    break;
+                                                            }
+                                                        }
+                                                        c5 = true;
+                                                        break;
+                                                    }
+                                                }
+                                                if (c5) {
+                                                    c5 = false;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                        aspeed = 0;
+                                }
+                        min += Calc(length, ast, bspeed, aspeed, _speed, lis.get(i).earlytime);
+                        bspeed = _speed;
+                        if (aspeed == 0) bspeed = 0;
+                        length = 0;
+                        break;
+                    }
+                }
+                if (i == lis.size() - 1) {
+                    if(lis.get(i).afterstop != 0) {
+                        if (Share.stations.get(lis.get(i).after).name.length() < max_length) {
+                            for (int v = 0; v < getLen(max_length, Share.stations.get(lis.get(i).after).name.length())[0]; v++)
+                                sb.append(" ");
+                            sb.append(Share.stations.get(lis.get(i).after).name);
+                            for (int v = 0; v <= getLen(max_length, Share.stations.get(lis.get(i).after).name.length())[1]; v++)
+                                sb.append(" ");
+                        }
+                        else
+                            sb.append(Share.stations.get(lis.get(i).after).name);
+                        minute = min % 60;
+                        hourOfDay = min / 60;
+                        hourOfDay = hourOfDay % 24;
+                        sb.append(" ");
+                        tmp1 = minute < 10 ? "0" + Integer.toString(minute) : Integer.toString(minute);
+                        tmp3 = hourOfDay < 10 ? "0" + Integer.toString(hourOfDay) : Integer.toString(hourOfDay);
+                        sb.append(tmp3);
+                        sb.append(":");
+                        sb.append(tmp1);
+                        sb.append("  --:--   --");
+                        tttmp = new TimeTime(0,0,false);
+                        m2 = min;
+                        tttmp.teg = false;
+                        tttmp.deparTime = -1;
+                        tttmp.arriveTime = m2;
+                        if(up)
+                            uptimes.add(tttmp);
+                        else
+                            downtimes.add(tttmp);
+                    }
+                    b = true;
+                    length = 0;
+                }
+                //else
+                //    sb.append("\n");
+                break;
+            }
+            if (b) {
+                //if(!b1 && j > 0)
+                //    length += lengths.get(j-1);
+                for (String stat:speeds) {
+                    if(jArray.get(j).equals(stat) && (!jArray.get(j).equals(Share.stations.get(lis.get(i).before).name))) {
+                        b2 = false;
+                        b4 = false;
+                        aspeed = 0;
+                        for(int k = 0; k < spd.size(); k++) {
+                            if(spd.get(k).equals(stat)) {
+                                b2 = true;
+                                b4 = false;
+                            }
+                            if(spd.get(k).startsWith("1")||spd.get(k).startsWith("2")||
+                                    spd.get(k).startsWith("3")||spd.get(k).startsWith("4")||
+                                    spd.get(k).startsWith("5")||spd.get(k).startsWith("6")||
+                                    spd.get(k).startsWith("7")||spd.get(k).startsWith("8")||
+                                    spd.get(k).startsWith("9")||spd.get(k).startsWith("0")
+                            ) {
+                                if (b2) {
+                                    aspeed = Integer.valueOf(spd.get(k));
+                                    break;
+                                }
+                                else
+                                    _speed = Integer.valueOf(spd.get(k));
+                            }
+                            else if (spd.get(k).startsWith("ss") && (lis.get(i).mode == RunMode.Express)) {
+                                if (b2) {
+                                    aspeed = Integer.valueOf(spd.get(k).substring(3));
+                                    break;
+                                }
+                                else
+                                    _speed = Integer.valueOf(spd.get(k).substring(3));
+                            }
+                            else if (spd.get(k).startsWith("ms") && (lis.get(i).mode != RunMode.Express) && (b4 != true)) {
+                                if (b2) {
+                                    aspeed = Integer.valueOf(spd.get(k).substring(3));
+                                    if((lis.get(i).mode == RunMode.MaxSpeed))
+                                        break;
+                                }
+                                else if((lis.get(i).mode != RunMode.Express))
+                                    _speed = Integer.valueOf(spd.get(k).substring(3));
+                            }
+                            else if (spd.get(k).startsWith("atp") && (lis.get(i).mode == RunMode.MaxSpeed)) {
+                                b4 = true;
+                                if (b2) {
+                                    aspeed = Integer.valueOf(spd.get(k).substring(4));
+                                    break;
+                                }
+                                else
+                                    _speed = Integer.valueOf(spd.get(k).substring(4));
+                            }
+                                    /*else if (lis.get(i).mode == RunMode.MaxSpeed) {
+                                        if (b2)
+                                            break;
+                                    }
+                        }
+                        b2 = false;
+                        b4 = false;
+                        if(_speed > speed) {
+                            if(speed == 310)
+                                speed += 5;
+                            switch (lis.get(i).mode) {
+                                case ATP:
+                                    _speed = speed - 6;
+                                    break;
+                                case Express:
+                                    _speed = speed - 15;
+                                case MaxSpeed:
+                                    _speed = speed - 10;
+                                    break;
+                            }
+                        }
+                        if ((((Switch)findViewById(R.id.sw_no350mode)).isChecked()) && (_speed > 310))
+                            _speed = 305;
+                        min += Calc(length, ast, bspeed, aspeed, _speed, 0);
+                        bspeed = _speed;
+                        if (aspeed == 0) bspeed = 0;
+                        length = 0;
+                        break;
+                    }
+                }
+                if(//b1 &&
+                        j < lengths.size())
+                    length += lengths.get(j);
+            }// if b==true
+            j++;
+        }
+    }*/
     public int Calc(double _long, double ast, int bspeed, int aspeed, int speed, int early) {
         double h,m,s,d,tmp2=0;
         if(bspeed<speed)
@@ -2795,7 +3308,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 sbb.append("本务：");
                 sbb.append(tra.toUpperCase());
                 g.DrawString(sbb.toString(), new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.WHITE)), new PointF(3070.0f - (sbb.length() * 20.0f), 10.5f));
-                if ((i + 26 >= stats.size() - 1) && (i - 26 <= 0)) {
+                if (26 >= stats.size()) {
                     g.DrawLine(afterpen, new Point(95, 215), new Point(3750, 215));
                     stations.clear();
                     for (PIDSInfo stat2 : stats)
@@ -3139,7 +3652,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 sbb.append("本务：");
                 sbb.append(tra.toUpperCase());
                 g.DrawString(sbb.toString(), new Font("微软雅黑", 40), new SolidBrush(Color.valueOf(Color.WHITE)), new PointF(3070.0f - (sbb.length() * 20.0f), 10.5f));
-                if ((i + 26 >= stats.size() - 1) && (i - 26 <= 0)) {
+                if (26 >= stats.size()) {
                     g.DrawLine(afterpen, new Point(95, 215), new Point(3750, 215));
                     stations.clear();
                     for (PIDSInfo stat2 : stats)
@@ -3455,5 +3968,238 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     })
                     .create().show();
         }
+    }
+    public String DownloadFTP(String file) throws Exception {
+        FTPClient fc = new FTPClient();
+        fc.enterLocalPassiveMode();
+        fc.connect("012.3vftp.cn", 3535);
+        fc.login("crh380b", "142410");
+        fc.changeWorkingDirectory("/");
+        fc.setFileType(FTPClient.BINARY_FILE_TYPE);
+        FileOutputStream fos = new FileOutputStream(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) + Character.toString(java.io.File.separatorChar) + "tmp.tmp", false);
+        fc.retrieveFile(file, fos);
+        return File.ReadAllText(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) + Character.toString(java.io.File.separatorChar) + "tmp.tmp");
+        /*URL url = new URL("ftp://crh380b:142410@012.3vftp.cn:3535/" + file);
+        int bytesRead = 1;
+        StringBuilder sb = new StringBuilder();
+        InputStream is = url.openStream();
+        byte[] buffer = new byte[1024*1024*16];
+        while ((bytesRead = is.read(buffer)) != -1) {
+            if((buffer[0] == 0xEF) && (buffer[1] == 0xBB) && (buffer[2] == 0xBF)) {
+                sb.append(new String(buffer, 3, bytesRead - 3, "UTF-8"));
+            }
+            else {
+                sb.append(new String(buffer, 0, bytesRead, "UTF-8"));
+            }
+        }
+        is.close();
+        return sb.toString();*/
+    }
+    public void SelcetLi(View view) {
+        if(selectS != -1)
+            SaveTicket(null);
+        List<String> stas = new List<String>();
+        List<String> ls = new List<>();
+        for(int i = 0; i < lis.size(); i++)
+            if (!((lis.get(i).beforestop == 0) || lis.get(i).beforeteg))
+                stas.Add(Share.stations.get(lis.get(i).before).name);
+        if (!((lis.get(lis.size() - 1).afterstop == 0) || lis.get(lis.size() - 1).afterteg))
+            stas.Add(Share.stations.get(lis.get(lis.size() - 1).after).name);
+        for (int i = 0; i < stas.size(); i++)
+            for (int j = 0; j < stas.size(); j++)
+                if (!stas.get(i).equals(stas.get(j)))
+                    ls.Add(stas.get(i) + " → " + stas.get(j));
+        new AlertDialog.Builder(this)
+                .setTitle("请选择区间")
+                .setSingleChoiceItems(ToArray(ls), 0, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Ticket t = tkl.GetE(ls.get(which));
+                        if(t == null) {
+                            List<SeatType> sts = new List<>();
+                            boolean b = false;
+                            for(EMU e : Share.emus) {
+                                if(e.name.equals(train)) {
+                                    for(int i = 0;i < e.trains.size();i++) {
+                                        if(e.versions.get(i).equals(ver)) {
+                                            for (Train car : e.trains.get(i)) {
+                                                for(SeatType s:car.dic.key) {
+                                                    b = false;
+                                                    for (SeatType ts : sts) {
+                                                        b = b || ToString(ts).equals(ToString(s));
+                                                    }
+                                                    if(!b)
+                                                        sts.add(s);
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            SeatType[] sa = new SeatType[sts.size()];
+                            String[] sass = new String[sts.size()];
+                            for (int i = 0; i < sts.size(); i++) {
+                                sa[i] = sts.get(i);
+                                sass[i] = ToString(sa[i]);
+                            }
+                            tkl.Add(ls.get(which), new Ticket(sa));
+                            t = tkl.GetE(ls.get(which));
+                        }
+                        tmpLi = ls.get(which);
+                        if(selectS == -1)
+                            ((Button)findViewById(R.id.sp_li)).setText(tmpLi);
+                        selectLQ = selectQ;
+                        selectQ = which;
+                        ((Button)findViewById(R.id.sp_ts)).setEnabled(true);
+                        SelectSt(null);
+                        dialog.cancel();
+                    }
+                }).create().show();
+    }
+    public void SelectSt(View view) {
+        if(selectS != -1) {
+            int tmp = selectQ;
+            selectQ = selectLQ;
+            SaveTicket(null);
+            selectQ = tmp;
+            ((Button)findViewById(R.id.sp_li)).setText(tmpLi);
+        }
+        List<String> stas = new List<String>();
+        List<String> ls = new List<>();
+        List<String> seats = new List<>();
+        boolean b = false;
+        for(int i = 0; i < lis.size(); i++)
+            if (!((lis.get(i).beforestop == 0) || lis.get(i).beforeteg))
+                stas.Add(Share.stations.get(lis.get(i).before).name);
+        if (!((lis.get(lis.size() - 1).afterstop == 0) || lis.get(lis.size() - 1).afterteg))
+            stas.Add(Share.stations.get(lis.get(lis.size() - 1).after).name);
+        for (int i = 0; i < stas.size(); i++)
+            for (int j = 0; j < stas.size(); j++)
+                if (!stas.get(i).equals(stas.get(j)))
+                    ls.Add(stas.get(i) + " → " + stas.get(j));
+        Ticket t = tkl.GetE(ls.get(selectQ));
+        for(SeatType s:t.key) {
+            b = false;
+            for(String str:seats) {
+                b = b || (ToString(s).equals(str));
+            }
+            if(!b) {
+                seats.add(ToString(s));
+            }
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("请选择坐席")
+                .setSingleChoiceItems(ToArray(seats), 0, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        selectS = which;
+                        ((Button)findViewById(R.id.sp_ts)).setText(seats.get(selectS));
+                        ((EditText)findViewById(R.id.et_tickets)).setText(Integer.toString(
+                                t.GetE(t.key.get(selectS)))
+                        );
+                        ((Button)findViewById(R.id.sp_ts)).setEnabled(true);
+                        ((EditText)findViewById(R.id.et_tickets)).setEnabled(true);
+                        ((Button)findViewById(R.id.btn_yestk)).setEnabled(true);
+                        dialog.cancel();
+                    }
+                }).create().show();
+    }
+    public void Clear() {
+        selectQ = -1;
+        selectS = -1;
+        tkl.Clear();
+        ((Button)findViewById(R.id.sp_li)).setEnabled(false);
+        ((Button)findViewById(R.id.btn_yestk)).setEnabled(false);
+        ((Button)findViewById(R.id.sp_li)).setText("");
+        ((Button)findViewById(R.id.sp_ts)).setEnabled(false);
+        ((Button)findViewById(R.id.sp_ts)).setText("");
+        ((EditText)findViewById(R.id.et_tickets)).setEnabled(false);
+        ((EditText)findViewById(R.id.et_tickets)).setText("0");
+    }
+    public void SaveTicket(View view) {
+        Ticket t = null;
+        t = tkl.GetE(((Button)findViewById(R.id.sp_li)).getText().toString());
+        int x = 0;
+        List<SeatType> sts = new List<>();
+        boolean b = false;
+        for(EMU e : Share.emus) {
+            if(e.name.equals(train)) {
+                for(int i = 0;i < e.trains.size();i++) {
+                    if(e.versions.get(i).equals(ver)) {
+                        for (Train car : e.trains.get(i)) {
+                            for(SeatType s:car.dic.key) {
+                                if(ToString(s).equals(ToString(t.key.get(selectS)))) {
+                                    x += car.dic.GetE(s);
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        int c = Integer.valueOf(((EditText)findViewById(R.id.et_tickets)).getText().toString());
+        if(c > x)
+            c = x;
+        t.SetE(t.key.get(selectS), c);
+        tkl.SetE(((Button)findViewById(R.id.sp_li)).getText().toString(), t);
+        ((EditText)findViewById(R.id.et_tickets)).setText(Integer.toString(c));
+    }
+    public void Foolish(View view) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            String str = Gethtml("https://raildatas.github.io/2^9+1.html", 0);
+            str = replace(str, '\r');
+            String[] strs = str.split("\n");
+            for (int i = 0;i < strs.length; i++) {
+                sb.append("UID: ");
+                sb.append(strs[i]);
+                if((i+1) < strs.length)
+                    sb.append("\n");
+            }
+        }
+        catch (Exception e) {
+            sb.append("反火车迷攻击数据网站导致数据网站崩溃力~");
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("今日反火车迷名单")
+                .setMessage(sb.toString())
+                .setPositiveButton("联系作者添加更多2⁹+1！", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Uri uri = Uri.parse("https://space.bilibili.com/621814881");
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        startActivity(intent);
+                        dialog.cancel();
+                    }
+                })
+                .setNegativeButton("关闭", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .setNeutralButton("举报反火车迷", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("请选择UID")
+                                .setSingleChoiceItems(sb.toString().split("\n"), 0, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        Uri uri = Uri.parse("https://space.bilibili.com/" + sb.toString().split("\n")[which].substring(5));
+                                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                                        startActivity(intent);
+                                        dialog.cancel();
+                                    }
+                                })
+                                .create().show();
+                    }
+                })
+                .create().show();
     }
 }

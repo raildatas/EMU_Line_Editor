@@ -1,8 +1,8 @@
 package com.example.editor;
 
 public class Dictionary<K,V> {
-    private List<K> key;
-    private List<V> value;
+    public List<K> key;
+    protected List<V> value;
 
     public Dictionary() {
         key = new List<K>();
@@ -28,5 +28,9 @@ public class Dictionary<K,V> {
                 return;
             }
         }
+    }
+    public void Clear() {
+        key.clear();
+        value.clear();
     }
 }
