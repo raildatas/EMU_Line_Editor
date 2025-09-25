@@ -11,6 +11,10 @@ public class Pen {
         this.c = c;
         this.cx = cx;
     }
+    public Pen(int c, float cx) {
+        this.c = Color.valueOf(c);
+        this.cx = cx;
+    }
     public Pen(SolidBrush sb) {
         this.c = sb.c;
         this.cx = -1.0f;

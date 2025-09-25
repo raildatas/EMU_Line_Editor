@@ -8,4 +8,5 @@ public class SolidBrush {
     public SolidBrush(Color c) {
         this.c = c;
     }
+    public SolidBrush(int c) { this.c = Color.valueOf(c); }
 }

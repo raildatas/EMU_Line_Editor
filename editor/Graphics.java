@@ -7,7 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 
 public class Graphics {
-    Canvas cav = null;
+    public Canvas cav = null;
 
     private Graphics(Bitmap bmp) {
         cav = new Canvas(bmp);
@@ -51,10 +51,31 @@ public class Graphics {
         paint.setColor(sb.c.toArgb());
         paint.setStyle(Paint.Style.FILL);
         paint.setTextSize(font.ft);
-        if(!text.startsWith("车次"))
+        boolean b = false;
+        for(int i = 32; i < 128; i++) {
+            b = b || text.startsWith(Character.toString((char)i));
+        }
+        if(b)
             cav.drawText(text, p.x + (text.length() / 4.0f * font.ft), p.y + (font.ft * 1.25f), paint);
         else
             cav.drawText(text, p.x + (text.length() / 8.0f * font.ft), p.y + (font.ft * 1.25f), paint);
+    }
+    public void DrawStrings(String text, Font font, SolidBrush sb, float x, float y) {
+        PointF p = new PointF(x, y);
+        Paint paint = new Paint();
+        paint.setColor(sb.c.toArgb());
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTextSize(font.ft);
+        boolean b = false;
+        for(int i = 32; i < 128; i++) {
+            b = b || text.startsWith(Character.toString((char)i));
+        }
+        /*if(b)
+            cav.drawText(text, p.x + (text.length() / 4.0f * font.ft), p.y + (font.ft * 1.25f), paint);
+        else
+            cav.drawText(text, p.x + (text.length() / 8.0f * font.ft), p.y + (font.ft * 1.25f), paint);*/
+        paint.setTextAlign(Paint.Align.LEFT);
+        cav.drawText(text, p.x, p.y + font.ft, paint);
     }
     public void DrawString(String text, Font font, SolidBrush sb, float x, float y) {
         this.DrawString(text, font, sb, new PointF(x, y));
@@ -68,6 +89,13 @@ public class Graphics {
     }
     public void DrawEllipse(Pen pen, int x, int y, int w, int h) {
         this.DrawEllipse(pen, new Rectangle(new Point(x, y), new Size(w, h)));
+    }
+    public void DrawEllipse(Pen pen, float x, float y, float w, float h) {
+        Paint paint = new Paint();
+        paint.setColor(pen.c.toArgb());
+        paint.setStrokeWidth(pen.cx);
+        paint.setStyle(Paint.Style.STROKE);
+        cav.drawCircle(x + (w / 2.0f),y + (h / 2.0f), (h / 2.0f), paint);
     }
     public void DrawRectangle(Pen pen, Rectangle rc) {
         Paint paint = new Paint();
