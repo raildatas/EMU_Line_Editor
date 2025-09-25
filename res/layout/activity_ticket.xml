@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.editor.TicketActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp">
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=" "
+                    android:textColor="#ff0000"
+                    android:textSize="10sp"></TextView>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="        该功能仅供娱乐，禁止用于其它用途          "
+                    android:textColor="#ff0000"
+                    android:textSize="20sp"></TextView>
+
+                <ImageView
+                    android:id="@+id/img_tkt"
+                    android:layout_width="match_parent"
+                    android:layout_height="270dp"
+                    android:src="@drawable/ticket"></ImageView>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:backgroundTint="#0fafcf"
+                        android:onClick="Preview"
+                        android:text="      预览      "
+                        android:textColor="#ffffff"></Button>
+
+                    <Button
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:backgroundTint="#0fafcf"
+                        android:onClick="SaveButton"
+                        android:text="     保存     "
+                        android:textColor="#ffffff"></Button>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="票号"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tkn"
+                        android:layout_width="320dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="A000001"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="车次"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tkt"
+                        android:layout_width="320dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="G1"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="发站"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tkb"
+                        android:layout_width="320dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="韧穿普|Wren Trumpull"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="到站"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tka"
+                        android:layout_width="320dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="贴白|Tiebai"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="时间"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tm"
+                        android:layout_width="320dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="1919-08-10 11:45"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/et_tkc"
+                        android:layout_width="150dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="14"
+                        android:textSize="20sp"></EditText>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="车"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tks"
+                        android:layout_width="150dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="03D"
+                        android:textSize="20sp"></EditText>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="号"
+                        android:textSize="20sp"></TextView>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="票价"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tkp"
+                        android:layout_width="320dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="￥|166.5|元"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="席别"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tst"
+                        android:layout_width="320dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="二等座"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="身份信息"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tki"
+                        android:layout_width="280dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="114514191981034346 韧穿普"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <CheckBox
+                        android:id="@+id/cb_dis"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="隐藏部分号码"
+                        android:textColor="#888888"
+                        android:theme="@style/rb_style"></CheckBox>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="21位码前14位"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tkm"
+                        android:layout_width="280dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="50330305552202"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="其它信息"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tel"
+                        android:layout_width="280dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="检票：检票口2B"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="标记"
+                        android:textSize="20sp"></TextView>
+
+                    <EditText
+                        android:id="@+id/et_tmk"
+                        android:layout_width="280dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="孩惠"
+                        android:textSize="20sp"></EditText>
+                </LinearLayout>
+        </LinearLayout>
+</ScrollView></HorizontalScrollView>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

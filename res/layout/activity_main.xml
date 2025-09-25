@@ -34,6 +34,20 @@
                 android:textColor="#FF0000"
                 android:textSize="20sp"></TextView>
         </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="今日反火车迷名单"
+                    android:textColor="#ffffff"
+                    android:onClick="Foolish"
+                    android:id="@+id/btn_ntfs"
+                    android:backgroundTint="#ff0000"></Button>
+            </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -73,6 +87,16 @@
             android:onClick="OutFile"
             android:enabled="false"></Button>
     </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_tik"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:text="报销凭证生成器"
+                android:textColor="#ffffff"
+                android:backgroundTint="#0fafcf"
+                android:onClick="OpenTicket"
+                android:enabled="true"></Button>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -115,6 +139,7 @@
                 android:textSize="20sp"
                 android:text="10:06"></TextView>
         </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -160,7 +185,7 @@
             android:layout_width="320dp"
             android:layout_height="wrap_content"
             android:textSize="20sp"
-            android:text="D301 D302"
+            android:text="D303 D304"
             android:gravity="center"></EditText>
     </LinearLayout>
     <LinearLayout
@@ -429,6 +454,85 @@
                 android:textSize="20sp">
             </TextView>
         </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="20sp"
+                    android:text="\n">
+                </TextView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="区间"
+                    android:textSize="20sp"></TextView>
+                <Button
+                    android:id="@+id/sp_li"
+                    android:layout_width="280dp"
+                    android:layout_height="40sp"
+                    android:gravity="center"
+                    android:enabled="false"
+                    android:textColor="#000000"
+                    android:backgroundTint="@color/material_dynamic_neutral90"
+                    android:onClick="SelcetLi"></Button>
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="坐席"
+                    android:textSize="20sp"></TextView>
+                <Button
+                    android:id="@+id/sp_ts"
+                    android:layout_width="280dp"
+                    android:layout_height="40sp"
+                    android:gravity="center"
+                    android:enabled="false"
+                    android:textColor="#000000"
+                    android:onClick="SelectSt"
+                    android:backgroundTint="@color/material_dynamic_neutral90"></Button>
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center">
+                    <EditText
+                        android:id="@+id/et_tickets"
+                        android:layout_width="220dp"
+                        android:layout_height="wrap_content"
+                        android:textSize="20sp"
+                        android:text="0"
+                        android:enabled="false"
+                        android:gravity="center"
+                        android:inputType="number"></EditText>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="张"
+                        android:textSize="20sp"></TextView>
+                    <Button
+                        android:id="@+id/btn_yestk"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="确定"
+                        android:textColor="#ffffff"
+                        android:backgroundTint="#0fafcf"
+                        android:onClick="SaveTicket"
+                        android:enabled="false"></Button>
+                </LinearLayout>
+            </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"
