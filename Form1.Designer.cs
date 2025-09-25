@@ -48,6 +48,7 @@
             this.删除DToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lbl_event = new System.Windows.Forms.Label();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tbx_beforestop = new System.Windows.Forms.MaskedTextBox();
             this.mtb_downtime = new System.Windows.Forms.MaskedTextBox();
             this.mtb_uptime = new System.Windows.Forms.MaskedTextBox();
             this.cbx_isAstar = new System.Windows.Forms.CheckBox();
@@ -68,7 +69,6 @@
             this.tbx_afterstop = new System.Windows.Forms.MaskedTextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
-            this.tbx_beforestop = new System.Windows.Forms.MaskedTextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.cbx_afterteg = new System.Windows.Forms.CheckBox();
@@ -95,17 +95,49 @@
             this.col_seat = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.col_tickets = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.lbx_lis = new System.Windows.Forms.ListBox();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.label22 = new System.Windows.Forms.Label();
+            this.tbx_tmk = new System.Windows.Forms.TextBox();
+            this.label21 = new System.Windows.Forms.Label();
+            this.tbx_tel = new System.Windows.Forms.TextBox();
+            this.label20 = new System.Windows.Forms.Label();
+            this.tbx_tkm = new System.Windows.Forms.MaskedTextBox();
+            this.cbx_dis = new System.Windows.Forms.CheckBox();
+            this.tbx_tki = new System.Windows.Forms.TextBox();
+            this.label19 = new System.Windows.Forms.Label();
+            this.tbx_tst = new System.Windows.Forms.TextBox();
+            this.label18 = new System.Windows.Forms.Label();
+            this.tbx_tkp = new System.Windows.Forms.TextBox();
+            this.label17 = new System.Windows.Forms.Label();
+            this.label16 = new System.Windows.Forms.Label();
+            this.tbx_tks = new System.Windows.Forms.TextBox();
+            this.label15 = new System.Windows.Forms.Label();
+            this.tbx_tkc = new System.Windows.Forms.TextBox();
+            this.tbx_tm = new System.Windows.Forms.MaskedTextBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.tbx_tkb = new System.Windows.Forms.TextBox();
+            this.label13 = new System.Windows.Forms.Label();
+            this.tbx_tka = new System.Windows.Forms.TextBox();
+            this.cbo_tkt = new System.Windows.Forms.ComboBox();
+            this.tbx_tkt = new System.Windows.Forms.MaskedTextBox();
+            this.button2 = new System.Windows.Forms.Button();
+            this.cbo_tkn = new System.Windows.Forms.ComboBox();
+            this.tbx_tkn = new System.Windows.Forms.MaskedTextBox();
+            this.pbx_ticket = new System.Windows.Forms.PictureBox();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.lbx_ntfs = new System.Windows.Forms.ListBox();
             this.btn_fuckntf = new System.Windows.Forms.Button();
             this.btn_refresh = new System.Windows.Forms.Button();
             this.btn_findrab = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_tickets)).BeginInit();
+            this.tabPage4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbx_ticket)).BeginInit();
             this.tabPage3.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -228,6 +260,7 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.tbx_beforestop);
             this.tabPage1.Controls.Add(this.mtb_downtime);
             this.tabPage1.Controls.Add(this.mtb_uptime);
             this.tabPage1.Controls.Add(this.cbx_isAstar);
@@ -248,7 +281,6 @@
             this.tabPage1.Controls.Add(this.tbx_afterstop);
             this.tabPage1.Controls.Add(this.label9);
             this.tabPage1.Controls.Add(this.label10);
-            this.tabPage1.Controls.Add(this.tbx_beforestop);
             this.tabPage1.Controls.Add(this.label7);
             this.tabPage1.Controls.Add(this.label8);
             this.tabPage1.Controls.Add(this.cbx_afterteg);
@@ -271,6 +303,12 @@
             resources.ApplyResources(this.tabPage1, "tabPage1");
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tbx_beforestop
+            // 
+            resources.ApplyResources(this.tbx_beforestop, "tbx_beforestop");
+            this.tbx_beforestop.Name = "tbx_beforestop";
+            this.tbx_beforestop.ValidatingType = typeof(int);
             // 
             // mtb_downtime
             // 
@@ -395,12 +433,6 @@
             // 
             resources.ApplyResources(this.label10, "label10");
             this.label10.Name = "label10";
-            // 
-            // tbx_beforestop
-            // 
-            resources.ApplyResources(this.tbx_beforestop, "tbx_beforestop");
-            this.tbx_beforestop.Name = "tbx_beforestop";
-            this.tbx_beforestop.ValidatingType = typeof(int);
             // 
             // label7
             // 
@@ -529,9 +561,11 @@
             resources.ApplyResources(this.tabControl1, "tabControl1");
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
             // tabPage2
             // 
@@ -580,6 +614,276 @@
             this.lbx_lis.Name = "lbx_lis";
             this.lbx_lis.SelectedIndexChanged += new System.EventHandler(this.lbx_lis_SelectedIndexChanged);
             // 
+            // tabPage4
+            // 
+            this.tabPage4.Controls.Add(this.button3);
+            this.tabPage4.Controls.Add(this.label22);
+            this.tabPage4.Controls.Add(this.tbx_tmk);
+            this.tabPage4.Controls.Add(this.label21);
+            this.tabPage4.Controls.Add(this.tbx_tel);
+            this.tabPage4.Controls.Add(this.label20);
+            this.tabPage4.Controls.Add(this.tbx_tkm);
+            this.tabPage4.Controls.Add(this.cbx_dis);
+            this.tabPage4.Controls.Add(this.tbx_tki);
+            this.tabPage4.Controls.Add(this.label19);
+            this.tabPage4.Controls.Add(this.tbx_tst);
+            this.tabPage4.Controls.Add(this.label18);
+            this.tabPage4.Controls.Add(this.tbx_tkp);
+            this.tabPage4.Controls.Add(this.label17);
+            this.tabPage4.Controls.Add(this.label16);
+            this.tabPage4.Controls.Add(this.tbx_tks);
+            this.tabPage4.Controls.Add(this.label15);
+            this.tabPage4.Controls.Add(this.tbx_tkc);
+            this.tabPage4.Controls.Add(this.tbx_tm);
+            this.tabPage4.Controls.Add(this.label14);
+            this.tabPage4.Controls.Add(this.tbx_tkb);
+            this.tabPage4.Controls.Add(this.label13);
+            this.tabPage4.Controls.Add(this.tbx_tka);
+            this.tabPage4.Controls.Add(this.cbo_tkt);
+            this.tabPage4.Controls.Add(this.tbx_tkt);
+            this.tabPage4.Controls.Add(this.button2);
+            this.tabPage4.Controls.Add(this.cbo_tkn);
+            this.tabPage4.Controls.Add(this.tbx_tkn);
+            this.tabPage4.Controls.Add(this.pbx_ticket);
+            resources.ApplyResources(this.tabPage4, "tabPage4");
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            this.tabPage4.Click += new System.EventHandler(this.tabPage4_Click);
+            // 
+            // label22
+            // 
+            resources.ApplyResources(this.label22, "label22");
+            this.label22.ForeColor = System.Drawing.Color.Red;
+            this.label22.Name = "label22";
+            // 
+            // tbx_tmk
+            // 
+            resources.ApplyResources(this.tbx_tmk, "tbx_tmk");
+            this.tbx_tmk.Name = "tbx_tmk";
+            // 
+            // label21
+            // 
+            resources.ApplyResources(this.label21, "label21");
+            this.label21.Name = "label21";
+            // 
+            // tbx_tel
+            // 
+            resources.ApplyResources(this.tbx_tel, "tbx_tel");
+            this.tbx_tel.Name = "tbx_tel";
+            // 
+            // label20
+            // 
+            resources.ApplyResources(this.label20, "label20");
+            this.label20.Name = "label20";
+            // 
+            // tbx_tkm
+            // 
+            resources.ApplyResources(this.tbx_tkm, "tbx_tkm");
+            this.tbx_tkm.Name = "tbx_tkm";
+            // 
+            // cbx_dis
+            // 
+            resources.ApplyResources(this.cbx_dis, "cbx_dis");
+            this.cbx_dis.Checked = true;
+            this.cbx_dis.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbx_dis.Name = "cbx_dis";
+            this.cbx_dis.UseVisualStyleBackColor = true;
+            // 
+            // tbx_tki
+            // 
+            resources.ApplyResources(this.tbx_tki, "tbx_tki");
+            this.tbx_tki.Name = "tbx_tki";
+            // 
+            // label19
+            // 
+            resources.ApplyResources(this.label19, "label19");
+            this.label19.Name = "label19";
+            // 
+            // tbx_tst
+            // 
+            resources.ApplyResources(this.tbx_tst, "tbx_tst");
+            this.tbx_tst.Name = "tbx_tst";
+            // 
+            // label18
+            // 
+            resources.ApplyResources(this.label18, "label18");
+            this.label18.Name = "label18";
+            // 
+            // tbx_tkp
+            // 
+            resources.ApplyResources(this.tbx_tkp, "tbx_tkp");
+            this.tbx_tkp.Name = "tbx_tkp";
+            // 
+            // label17
+            // 
+            resources.ApplyResources(this.label17, "label17");
+            this.label17.Name = "label17";
+            // 
+            // label16
+            // 
+            resources.ApplyResources(this.label16, "label16");
+            this.label16.Name = "label16";
+            // 
+            // tbx_tks
+            // 
+            resources.ApplyResources(this.tbx_tks, "tbx_tks");
+            this.tbx_tks.Name = "tbx_tks";
+            // 
+            // label15
+            // 
+            resources.ApplyResources(this.label15, "label15");
+            this.label15.Name = "label15";
+            // 
+            // tbx_tkc
+            // 
+            resources.ApplyResources(this.tbx_tkc, "tbx_tkc");
+            this.tbx_tkc.Name = "tbx_tkc";
+            // 
+            // tbx_tm
+            // 
+            resources.ApplyResources(this.tbx_tm, "tbx_tm");
+            this.tbx_tm.Name = "tbx_tm";
+            this.tbx_tm.ValidatingType = typeof(System.DateTime);
+            // 
+            // label14
+            // 
+            resources.ApplyResources(this.label14, "label14");
+            this.label14.Name = "label14";
+            // 
+            // tbx_tkb
+            // 
+            resources.ApplyResources(this.tbx_tkb, "tbx_tkb");
+            this.tbx_tkb.Name = "tbx_tkb";
+            // 
+            // label13
+            // 
+            resources.ApplyResources(this.label13, "label13");
+            this.label13.Name = "label13";
+            // 
+            // tbx_tka
+            // 
+            resources.ApplyResources(this.tbx_tka, "tbx_tka");
+            this.tbx_tka.Name = "tbx_tka";
+            // 
+            // cbo_tkt
+            // 
+            this.cbo_tkt.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbo_tkt.FormattingEnabled = true;
+            this.cbo_tkt.Items.AddRange(new object[] {
+            resources.GetString("cbo_tkt.Items"),
+            resources.GetString("cbo_tkt.Items1"),
+            resources.GetString("cbo_tkt.Items2"),
+            resources.GetString("cbo_tkt.Items3"),
+            resources.GetString("cbo_tkt.Items4"),
+            resources.GetString("cbo_tkt.Items5"),
+            resources.GetString("cbo_tkt.Items6"),
+            resources.GetString("cbo_tkt.Items7"),
+            resources.GetString("cbo_tkt.Items8"),
+            resources.GetString("cbo_tkt.Items9"),
+            resources.GetString("cbo_tkt.Items10"),
+            resources.GetString("cbo_tkt.Items11"),
+            resources.GetString("cbo_tkt.Items12"),
+            resources.GetString("cbo_tkt.Items13"),
+            resources.GetString("cbo_tkt.Items14"),
+            resources.GetString("cbo_tkt.Items15"),
+            resources.GetString("cbo_tkt.Items16"),
+            resources.GetString("cbo_tkt.Items17"),
+            resources.GetString("cbo_tkt.Items18"),
+            resources.GetString("cbo_tkt.Items19"),
+            resources.GetString("cbo_tkt.Items20"),
+            resources.GetString("cbo_tkt.Items21"),
+            resources.GetString("cbo_tkt.Items22"),
+            resources.GetString("cbo_tkt.Items23"),
+            resources.GetString("cbo_tkt.Items24"),
+            resources.GetString("cbo_tkt.Items25"),
+            resources.GetString("cbo_tkt.Items26"),
+            resources.GetString("cbo_tkt.Items27"),
+            resources.GetString("cbo_tkt.Items28"),
+            resources.GetString("cbo_tkt.Items29"),
+            resources.GetString("cbo_tkt.Items30"),
+            resources.GetString("cbo_tkt.Items31"),
+            resources.GetString("cbo_tkt.Items32"),
+            resources.GetString("cbo_tkt.Items33"),
+            resources.GetString("cbo_tkt.Items34"),
+            resources.GetString("cbo_tkt.Items35"),
+            resources.GetString("cbo_tkt.Items36"),
+            resources.GetString("cbo_tkt.Items37"),
+            resources.GetString("cbo_tkt.Items38"),
+            resources.GetString("cbo_tkt.Items39"),
+            resources.GetString("cbo_tkt.Items40"),
+            resources.GetString("cbo_tkt.Items41"),
+            resources.GetString("cbo_tkt.Items42"),
+            resources.GetString("cbo_tkt.Items43"),
+            resources.GetString("cbo_tkt.Items44"),
+            resources.GetString("cbo_tkt.Items45"),
+            resources.GetString("cbo_tkt.Items46"),
+            resources.GetString("cbo_tkt.Items47"),
+            resources.GetString("cbo_tkt.Items48"),
+            resources.GetString("cbo_tkt.Items49"),
+            resources.GetString("cbo_tkt.Items50"),
+            resources.GetString("cbo_tkt.Items51"),
+            resources.GetString("cbo_tkt.Items52")});
+            resources.ApplyResources(this.cbo_tkt, "cbo_tkt");
+            this.cbo_tkt.Name = "cbo_tkt";
+            // 
+            // tbx_tkt
+            // 
+            resources.ApplyResources(this.tbx_tkt, "tbx_tkt");
+            this.tbx_tkt.Name = "tbx_tkt";
+            // 
+            // button2
+            // 
+            resources.ApplyResources(this.button2, "button2");
+            this.button2.Name = "button2";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // cbo_tkn
+            // 
+            this.cbo_tkn.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbo_tkn.FormattingEnabled = true;
+            this.cbo_tkn.Items.AddRange(new object[] {
+            resources.GetString("cbo_tkn.Items"),
+            resources.GetString("cbo_tkn.Items1"),
+            resources.GetString("cbo_tkn.Items2"),
+            resources.GetString("cbo_tkn.Items3"),
+            resources.GetString("cbo_tkn.Items4"),
+            resources.GetString("cbo_tkn.Items5"),
+            resources.GetString("cbo_tkn.Items6"),
+            resources.GetString("cbo_tkn.Items7"),
+            resources.GetString("cbo_tkn.Items8"),
+            resources.GetString("cbo_tkn.Items9"),
+            resources.GetString("cbo_tkn.Items10"),
+            resources.GetString("cbo_tkn.Items11"),
+            resources.GetString("cbo_tkn.Items12"),
+            resources.GetString("cbo_tkn.Items13"),
+            resources.GetString("cbo_tkn.Items14"),
+            resources.GetString("cbo_tkn.Items15"),
+            resources.GetString("cbo_tkn.Items16"),
+            resources.GetString("cbo_tkn.Items17"),
+            resources.GetString("cbo_tkn.Items18"),
+            resources.GetString("cbo_tkn.Items19"),
+            resources.GetString("cbo_tkn.Items20"),
+            resources.GetString("cbo_tkn.Items21"),
+            resources.GetString("cbo_tkn.Items22"),
+            resources.GetString("cbo_tkn.Items23"),
+            resources.GetString("cbo_tkn.Items24"),
+            resources.GetString("cbo_tkn.Items25")});
+            resources.ApplyResources(this.cbo_tkn, "cbo_tkn");
+            this.cbo_tkn.Name = "cbo_tkn";
+            // 
+            // tbx_tkn
+            // 
+            resources.ApplyResources(this.tbx_tkn, "tbx_tkn");
+            this.tbx_tkn.Name = "tbx_tkn";
+            // 
+            // pbx_ticket
+            // 
+            this.pbx_ticket.Image = global::ELE.Properties.Resources.红前_01;
+            resources.ApplyResources(this.pbx_ticket, "pbx_ticket");
+            this.pbx_ticket.Name = "pbx_ticket";
+            this.pbx_ticket.TabStop = false;
+            // 
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this.lbx_ntfs);
@@ -618,6 +922,13 @@
             this.btn_findrab.UseVisualStyleBackColor = true;
             this.btn_findrab.Click += new System.EventHandler(this.btn_findrab_Click);
             // 
+            // button3
+            // 
+            resources.ApplyResources(this.button3, "button3");
+            this.button3.Name = "button3";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
             // Form1
             // 
             resources.ApplyResources(this, "$this");
@@ -625,6 +936,7 @@
             this.Controls.Add(this.lbl_event);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.menuStrip1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
             this.Name = "Form1";
@@ -638,6 +950,9 @@
             this.tabControl1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgv_tickets)).EndInit();
+            this.tabPage4.ResumeLayout(false);
+            this.tabPage4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbx_ticket)).EndInit();
             this.tabPage3.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -715,6 +1030,36 @@
         private System.Windows.Forms.Button btn_refresh;
         private System.Windows.Forms.Button btn_findrab;
         private System.Windows.Forms.ListBox lbx_ntfs;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.PictureBox pbx_ticket;
+        private System.Windows.Forms.MaskedTextBox tbx_tkn;
+        private System.Windows.Forms.ComboBox cbo_tkn;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.ComboBox cbo_tkt;
+        private System.Windows.Forms.MaskedTextBox tbx_tkt;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.TextBox tbx_tka;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.TextBox tbx_tkb;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.TextBox tbx_tks;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.TextBox tbx_tkc;
+        private System.Windows.Forms.MaskedTextBox tbx_tm;
+        private System.Windows.Forms.TextBox tbx_tkp;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.TextBox tbx_tst;
+        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.TextBox tbx_tki;
+        private System.Windows.Forms.Label label19;
+        private System.Windows.Forms.CheckBox cbx_dis;
+        private System.Windows.Forms.MaskedTextBox tbx_tkm;
+        private System.Windows.Forms.Label label22;
+        private System.Windows.Forms.TextBox tbx_tmk;
+        private System.Windows.Forms.Label label21;
+        private System.Windows.Forms.TextBox tbx_tel;
+        private System.Windows.Forms.Label label20;
+        private System.Windows.Forms.Button button3;
     }
 }
 

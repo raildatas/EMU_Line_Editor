@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -350,11 +351,14 @@ namespace ELE
             }
             try
             {
+                cbo_tkn.SelectedIndex = 0;
+                cbo_tkt.SelectedIndex = 30;
                 if (rcps.Length > 0)
                 {
                     selectC = 0;
                     cbo_rcp.Text = (rcps[0]);
                 }
+                //pbx_ticket.Image = Pic.GetBmp();
                 for (int i = 0; i < evens.Length; i++)
                 {
                     tmp3 = evens[i].Split(' ');
@@ -553,15 +557,143 @@ namespace ELE
             {
                 //System.exit(1);
             }
-            flag = false;
-            foreach (EMU item6 in Share.emus)
+            try
             {
-                cbo_trainType.Items.Add(item6.name);
+                flag = false;
+                foreach (EMU item6 in Share.emus)
+                {
+                    cbo_trainType.Items.Add(item6.name);
+                }
+                cbo_trainType.SelectedIndex = 0;
+                cbo_trainSeat.SelectedIndex = 0;
             }
-            cbo_trainType.SelectedIndex = 0;
-            cbo_trainSeat.SelectedIndex = 0;
-            if (file != "")
-                Open(file);
+            catch { }
+            try
+            {
+                if (file != "")
+                    Open(file);
+            }
+            catch { MessageBox.Show("打开失败","错误", MessageBoxButtons.OK, MessageBoxIcon.Stop); }
+            try
+            {
+                Bitmap bmp = new Bitmap(global::ELE.Properties.Resources.红前_01);
+                Graphics g = Graphics.FromImage(bmp);
+                String astn = tbx_tka.Text.Split('|')[0];
+                int al = astn.Length;
+                String bstn = tbx_tkb.Text.Split('|')[0];
+                int bl = bstn.Length;
+                float f = 491.7729f;
+                if (astn.Length == 2)
+                {
+                    astn = astn.Insert(1, "    ");
+                    al = 3;
+                }
+                if (bstn.Length == 2)
+                {
+                    bstn = bstn.Insert(1, "    ");
+                    bl = 3;
+                }
+                //御坂|Misaka Mikoto
+                //贴白|Tiebai
+                //韧穿普|Wren Trumpull
+                //咸淑娜|Xian Shuna
+                //香港西九龙|Hongkongwestkowloon
+                //忽任|Head of the Strategic Misinfomation Office (h)
+                //北京城市副中心|Beijingchengshifuzhongxin
+                //卡特洛斯|Kateluos
+                g.DrawString(cbo_tkn.Items[cbo_tkn.SelectedIndex].ToString() + tbx_tkn.Text.Substring(3), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular),
+                    new SolidBrush(Color.FromArgb(0xf9, 0x2f, 0x10)), 205.5277f - (209.4209f / 2), 112.6888f - (59.4258f / 2));
+                g.DrawString(cbo_tkt.Items[cbo_tkt.SelectedIndex].ToString() + tbx_tkt.Text.Substring(3), new Font("宋体", 55 * 0.75f, FontStyle.Regular),
+                    new SolidBrush(Color.FromArgb(0, 0, 0)), 529.536f - (151.25f / 2 * 0) - ((cbo_tkt.Items[cbo_tkt.SelectedIndex].ToString() + tbx_tkt.Text.Substring(3)).Length / 4.0f * 55f * 0.75f), 171.1038f - 30.25f);
+                g.DrawString(astn, new Font("微软雅黑", 55 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 774.6464f + (181.5f / 1) - (46.2002f * 1.5f) - (al * 55f) - 10f, 168.2542f - (60.5f / 2) - 20);
+                if (tbx_tka.Text.Contains("|"))
+                {
+                    if ((tbx_tka.Text.Split('|')[1].Length * 18) >= (al * 55)) //英语比中文长
+                        g.DrawString(tbx_tka.Text.Split('|')[1], new Font("宋体", 36 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 774.6464f + (181.5f / 1) - (46.2002f * 1.5f) - (al * 55f) - 10f, 215.1326f - (39.6006f / 2) - 10f);
+                    else //英语比中文短
+                        g.DrawString(tbx_tka.Text.Split('|')[1], new Font("宋体", 36 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 774.6464f + (181.5f / 1) - (46.2002f * 1.5f) - 10f - (tbx_tka.Text.Split('|')[1].Length * 18f), 215.1326f - (39.6006f / 2) - 10f);
+                }
+                g.DrawString("站", new Font("宋体", 42 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 774.6464f + (181.5f / 1) - (46.2002f * 1.5f), 167.9109f - (46.2002f / 2));
+
+                g.DrawString(bstn, new Font("微软雅黑", 55 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 345.7445f - (46.2002f / 2) - (bl * 55f), 168.2542f - (60.5f / 2) - 20);
+                if (tbx_tka.Text.Contains("|"))
+                {
+                    g.DrawString(tbx_tkb.Text.Split('|')[1], new Font("宋体", 36 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 345.7445f - (46.2002f / 2) - (tbx_tkb.Text.Split('|')[1].Length * 18f), 215.1326f - (39.6006f / 2) - 10f);
+                }
+                g.DrawString("站", new Font("宋体", 42 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 345.7445f - (46.2002f / 2), 167.9109f - (46.2002f / 2));
+
+                g.DrawString(tbx_tm.Text.Substring(3, 4), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    126.1459f - (111.6074f / 2) - 10f + (Count(tbx_tm.Text.Substring(3, 4), "1") * 10f), 265.1282f - (59.4258f / 2) + 5f);
+                g.DrawString(tbx_tm.Text.Substring(8, 2), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    244.4638f - (56.2285f / 2) - 10f, 265.1282f - (59.4258f / 2) + 5f);
+                g.DrawString(tbx_tm.Text.Substring(11, 2), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    338.2602f - (44.1377f / 2) - 15f, 265.1282f - (59.4258f / 2) + 5f);
+                g.DrawString(tbx_tm.Text.Substring(14, 2), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    434.6693f - (44.6533f / 2) - 13f + (Count(tbx_tm.Text.Substring(14, 2), "1") * 8f), 265.1282f - (59.4258f / 2) + 5f);
+                g.DrawString(tbx_tm.Text.Substring(17, 2), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    500.1137f - (55.1973f / 2) - 10f, 265.1282f - (59.4258f / 2) + 5f);
+
+                g.DrawString(tbx_tkc.Text, new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    675.7763f - (56.7959f / 2) - 10f + (Count(tbx_tkc.Text, "1") * 10f), 265.1282f - (59.4258f / 2) + 5f);
+                g.DrawString(tbx_tks.Text, new Font("宋体", 48 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    781.6835f - (79.2002f / 2) - 15f, 265.1282f - (59.4258f / 2));
+
+                g.DrawString(tbx_tkp.Text.Split('|')[0], new Font("Noto Serif SC", 36 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    96.3871f - (30.334f / 2), 319.9993f - (69.4805f / 2));
+                g.DrawString(tbx_tkp.Text.Split('|')[1], new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    165.8598f - (95.7256f / 2) + (tbx_tkp.Text.Split('|')[0].Length * 18f) - 15f, 316.7962f - (54.0234f / 2));
+                g.DrawString(tbx_tkp.Text.Split('|')[2], new Font("宋体", 24 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    165.8598f - (95.7256f / 2) + (tbx_tkp.Text.Split('|')[0].Length * 18f) - 15f + ((tbx_tkp.Text.Split('|')[1].Length) * 24f), 314.8333f - (26.2002f / 2));
+
+                g.DrawString(tbx_tst.Text, new Font("宋体", 42 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 823.6229f - (tbx_tst.Text.Length * 21f), 315.7581f - 20);
+
+                if (cbx_dis.Checked)
+                {
+                    g.DrawString(tbx_tki.Text.Substring(0, 10), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 189.7577f - (240.2109f / 2), 466.2356f - (54.0234f / 2));
+                    g.DrawString("****", new Font("Bahnschrift", 48 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 356.7472f - (90.48f / 2) - (Count(tbx_tki.Text.Substring(0, 10), "1") * 6f) + 5f, 466.2356f - (54.0234f / 2));
+                    g.DrawString(tbx_tki.Text.Substring(14, 4), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 457.7636f - (84.0234f / 2) - 24f - (Count(tbx_tki.Text.Substring(0, 10), "1") * 6f) + 5f, 466.2356f - (54.0234f / 2));
+                    g.DrawString(" " + tbx_tki.Text.Substring(18), new Font("宋体", 48 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 457.7636f + (84.0234f / 2) - 42f, 466.2356f - (54.0234f / 2));
+                }
+                else
+                {
+                    g.DrawString(tbx_tki.Text.Substring(0, 18), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 189.7577f - (240.2109f / 2), 466.2356f - (54.0234f / 2));
+                    g.DrawString(" " + tbx_tki.Text.Substring(18), new Font("宋体", 42 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 189.7577f - (240.2109f / 2) + (18f * 24f) - (Count(tbx_tki.Text.Substring(0, 18), "1") * 6f) + 5f, 466.2356f - (54.0234f / 2));
+                }
+
+                g.DrawString(tbx_tkm.Text.Substring(9) + cbo_tkn.Items[cbo_tkn.SelectedIndex].ToString() + tbx_tkn.Text.Substring(3), new Font("Bernard MT Condensed", 36 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 261.8358f - (361.2305f / 2), 616.718f - (44.3359f / 2));
+
+                g.DrawString(tbx_tel.Text.Replace('：', ':'), new Font("宋体", 40 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    804.5585f + (352f / 2) - (tbx_tel.Text.Length * 40f), 112.6888f - 30f);
+
+                //491.7729
+
+                if (tbx_tmk.Text.Length == 1)
+                {
+                    g.DrawString(tbx_tmk.Text, new Font("华文中宋", 30 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                        463.6884f - (33f / 2f), 316.7029f - (33.54f / 2f) - 3f);
+                    g.DrawEllipse(new Pen(Color.FromArgb(0, 0, 0), 3), 463.2284f - ((float)Math.Sqrt(1800) / 2f) + 4f, 314.0786f - (42.4264f / 2f), (float)Math.Sqrt(1800) * 1f, (float)Math.Sqrt(1800) * 1f);
+                }
+                else if (tbx_tmk.Text.Length > 1)
+                {
+                    f -= tbx_tmk.Text.Length / 2.0f * ((float)Math.Sqrt(1800));
+                    f -= (tbx_tmk.Text.Length - 1.0f) / 2.0f * 15.0f;
+                    for (int i = 0; i < tbx_tmk.Text.Length; i++)
+                    {
+                        //463.6884(字)-463.2284(圆)
+                        //
+                        g.DrawEllipse(new Pen(Color.FromArgb(0, 0, 0), 3), f, 314.0786f - (42.4264f / 2f), (float)Math.Sqrt(1800) * 1f, (float)Math.Sqrt(1800) * 1f);
+                        g.DrawString(tbx_tmk.Text[i].ToString(), new Font("华文中宋", 30 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                        f + 463.6884f - 463.2284f, 316.7029f - (33.54f / 2f) - 3f);
+                        f += 15f;
+                        f += (float)Math.Sqrt(1800);
+                    }
+                }
+
+                pbx_ticket.Image = bmp;
+            }
+            catch
+            {
+            }
             /*int t1 = 0; int t2 = 0;
             for (int k = 0; k < Share.stations.Count; k++)
             {
@@ -2841,7 +2973,7 @@ namespace ELE
             response.Close();
             return sb.ToString();
         }
-        public String CalcTime(int upmin, int uphour, bool up)
+        public String OldCalcTime(int upmin, int uphour, bool up)
         {
             if (this.lis.Count == 0)
                 return "";
@@ -3393,6 +3525,268 @@ namespace ELE
             catch (Exception e) { }
             return sb.ToString();
         }
+        public String CalcTime(int upmin, int uphour, bool up)
+        {
+            if (this.lis.Count == 0)
+                return "";
+            StringBuilder sb = new StringBuilder();
+            List<ListItem> lis = new List<ListItem>();
+            String tmp1, tmp3;
+            int minute = 0, hourOfDay = 0, m2;
+            int min = upmin + (60 * uphour);
+            TimeTime tttmp = new TimeTime(0, 0, false);
+            if (up)
+            {
+                lis = this.lis;
+                uptimes.Clear();
+            }
+            else
+            {
+                ListItem tmp4;
+                for (int i = this.lis.Count - 1; i >= 0; i--)
+                {
+                    tmp4 = this.lis[i];
+                    lis.Add(new ListItem(tmp4.after, tmp4.afterstop,
+                            tmp4.line, tmp4.mode,
+                            tmp4.before, tmp4.beforestop, tmp4.earlytime,
+                            tmp4.afterteg, tmp4.beforeteg));
+                }
+                downtimes.Clear();
+            }
+            int max_length = Share.stations[lis[0].before].name.Length;
+            for (int i = 0; i < lis.Count; i++)
+            {
+                if ((!Share.stations[lis[i].before].name.EndsWith("线路所")) && (lis[i].beforestop != 0) && (!lis[i].beforeteg))
+                {
+                    if (max_length < Share.stations[lis[i].before].name.Length)
+                        max_length = Share.stations[lis[i].before].name.Length;
+                }
+            }
+            if ((!Share.stations[lis[lis.Count - 1].after].name.EndsWith("线路所"))
+                    && (lis[lis.Count - 1].afterstop != 0) && (!lis[lis.Count - 1].afterteg))
+            {
+                if (max_length < Share.stations[lis[lis.Count - 1].after].name.Length)
+                    max_length = Share.stations[lis[lis.Count - 1].after].name.Length;
+            }
+            if (lis[0].beforestop != 0)
+            {
+                if (Share.stations[lis[0].before].name.Length < max_length)
+                {
+                    sb.Append("_");
+                    for (int i = 1; i < getLen(max_length, Share.stations[lis[0].before].name.Length)[0]; i++)
+                        sb.Append(" ");
+                    sb.Append(Share.stations[lis[0].before].name);
+                    for (int i = 0; i <= getLen(max_length, Share.stations[lis[0].before].name.Length)[1]; i++)
+                        sb.Append(" ");
+                }
+                else
+                    sb.Append(Share.stations[lis[0].before].name);
+                sb.Append(" --:--  ");
+                minute = upmin;
+                hourOfDay = uphour % 24;
+                tmp1 = minute < 10 ? "0" + Convert.ToString(minute) : Convert.ToString(minute);
+                tmp3 = hourOfDay < 10 ? "0" + Convert.ToString(hourOfDay) : Convert.ToString(hourOfDay);
+                sb.Append(tmp3);
+                sb.Append(":");
+                sb.Append(tmp1);
+                sb.Append(" --\r\n");
+                m2 = min;
+                tttmp.arriveTime = -1;
+                tttmp.deparTime = m2;
+                tttmp.teg = false;
+                if (up)
+                    uptimes.Add(tttmp);
+                else
+                    downtimes.Add(tttmp);
+            }
+            for (int i = 0; i < lis.Count; i++)
+            {
+                min += CalcLit(lis[i].before, lis[i].line, lis[i].after, lis[i].mode) + lis[i].earlytime;
+                if (lis[i].afterstop > 0)
+                {
+                    if (Share.stations[lis[i].after].name.Length < max_length)
+                    {
+                        for (int v = 0; v < getLen(max_length, Share.stations[lis[i].after].name.Length)[0]; v++)
+                            sb.Append(" ");
+                        sb.Append(Share.stations[lis[i].after].name);
+                        for (int v = 0; v <= getLen(max_length, Share.stations[lis[i].after].name.Length)[1]; v++)
+                            sb.Append(" ");
+                    }
+                    else
+                        sb.Append(Share.stations[lis[i].after].name);
+                    sb.Append(" ");
+                    tttmp = new TimeTime(0, 0, false);
+                    m2 = min;
+                    sb.Append(ToTime(min));
+                    tttmp.arriveTime = m2;
+                    if (i == (lis.Count - 1))
+                    {
+                        sb.Append("  --:--   --");
+                        tttmp.teg = false;
+                        tttmp.deparTime = -1;
+                        if (up)
+                            uptimes.Add(tttmp);
+                        else
+                            downtimes.Add(tttmp);
+                        return sb.ToString();
+                    }
+                    min += lis[i].afterstop;
+                    sb.Append(" ");
+                    sb.Append(ToTime(min));
+                    m2 = min;
+                    tttmp.deparTime = m2;
+                    sb.Append(" ");
+                    if (lis[i].afterteg)
+                    {
+                        tttmp.teg = true;
+                        sb.Append("技停\r\n");
+                    }
+                    else
+                    {
+                        sb.Append(lis[i].afterstop);
+                        sb.Append("分\r\n");
+                    }
+                    if (up)
+                        uptimes.Add(tttmp);
+                    else
+                        downtimes.Add(tttmp);
+                }
+            }
+            return sb.ToString();
+        }
+        public int CalcLit(int before, int line, int after, RunMode rm)
+        {
+            int r = 0, spd = 0, bspd = 0, aspd = 0, j = 0, ms = 2147483647, k = 0;
+            double tmp = 0.0, len = 0.0;
+            double ast = 0.0;
+            bool b = false;
+            String nowStn = "", bStn = "";
+            String[] limitSpeeds = Share.rails[line].speeds.Replace("\r", "").Split('\n');
+            foreach (EMU e in Share.emus)
+            {
+                if (e.name.Equals(train))
+                {
+                    ast = e.ast;
+                    ms = e.speed;
+                    break;
+                }
+            }
+            if (cbx_no350mode.Checked)
+                ms = 310;
+            for (int i = 0; i < Share.rails[line].stations.Count; i++)
+            {
+                //读取 j
+                if (limitSpeeds[j].Equals(Share.rails[line].stations[i]))
+                {
+                    nowStn = limitSpeeds[j];
+                    j++;
+                }
+                else if (limitSpeeds[j].StartsWith("atp"))
+                {
+                    if (rm == RunMode.ATP)
+                        spd = int.Parse(limitSpeeds[j].Split(' ')[1]);
+                    j++;
+                    i--;
+                    continue;
+                }
+                else if (limitSpeeds[j].StartsWith("ms"))
+                {
+                    if (rm != RunMode.Express)
+                        spd = int.Parse(limitSpeeds[j].Split(' ')[1]);
+                    j++;
+                    i--;
+                    continue;
+                }
+                else if (limitSpeeds[j].StartsWith("ss"))
+                {
+                    if (rm == RunMode.Express)
+                        spd = int.Parse(limitSpeeds[j].Split(' ')[1]);
+                    j++;
+                    i--;
+                    continue;
+                }
+                else if (limitSpeeds[j].StartsWith("1") || limitSpeeds[j].StartsWith("2") || limitSpeeds[j].StartsWith("3") || limitSpeeds[j].StartsWith("4") || limitSpeeds[j].StartsWith("5") || limitSpeeds[j].StartsWith("6") || limitSpeeds[j].StartsWith("7") || limitSpeeds[j].StartsWith("8") || limitSpeeds[j].StartsWith("9"))
+                {
+                    spd = int.Parse(limitSpeeds[j]);
+                    j++;
+                    i--;
+                    continue;
+                }
+                if (spd > ms)
+                {
+                    if (ms == 310)
+                        ms += 5;
+                    switch (rm)
+                    {
+                        case RunMode.ATP:
+                            spd = ms - 6;
+                            break;
+                        case RunMode.Express:
+                            spd = ms - 15;
+                            break;
+                        case RunMode.MaxSpeed:
+                            spd = ms - 10;
+                            break;
+                    }
+                }
+                if (Share.rails[line].stations[i].Equals(Share.stations[after].name))
+                {
+                    if (b == false)
+                        return CalcLit(after, line, before, rm);
+                    else
+                    {
+                        r += Calc(len, ast, bspd, 0, spd, 0);
+                        return r;
+                    }
+                }
+                if (Share.rails[line].stations[i].Equals(Share.stations[before].name))
+                {
+                    b = true;
+                    bStn = nowStn;
+                }
+                if (!bStn.Equals(nowStn))
+                {
+                    k = 0;
+                    if (limitSpeeds[j].StartsWith("atp"))
+                    {
+                        if (rm == RunMode.ATP)
+                            aspd = int.Parse(limitSpeeds[j].Split(' ')[1]);
+                        j++;
+                        k++;
+                    }
+                    if (limitSpeeds[j].StartsWith("ms"))
+                    {
+                        if (rm != RunMode.Express)
+                            aspd = int.Parse(limitSpeeds[j].Split(' ')[1]);
+                        j++;
+                        k++;
+                    }
+                    if (limitSpeeds[j].StartsWith("ss"))
+                    {
+                        if (rm == RunMode.Express)
+                            aspd = int.Parse(limitSpeeds[j].Split(' ')[1]);
+                        j++;
+                        k++;
+                    }
+                    if (limitSpeeds[j].StartsWith("1") || limitSpeeds[j].StartsWith("2") || limitSpeeds[j].StartsWith("3") || limitSpeeds[j].StartsWith("4") || limitSpeeds[j].StartsWith("5") || limitSpeeds[j].StartsWith("6") || limitSpeeds[j].StartsWith("7") || limitSpeeds[j].StartsWith("8") || limitSpeeds[j].StartsWith("9"))
+                    {
+                        aspd = int.Parse(limitSpeeds[j]);
+                        j++;
+                        k++;
+                    }
+                    j -= k;
+                    r += Calc(len, ast, bspd, aspd, spd, 0);
+                    len = 0.0;
+                    bStn = nowStn;
+                }
+                bspd = spd;
+                if (b)
+                {
+                    len += Share.rails[line].lengths[i];
+                }
+            }
+            return r;
+        }
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             if (cbx_isAstar.Checked)
@@ -3651,6 +4045,165 @@ namespace ELE
                 lbx_ntfs.Items.Add("反火车迷攻击数据网站导致数据网站崩溃力~");
             }
         }
+        private int Count(String str, String find)
+        {
+            int j = 0;
+            while (str.Contains(find))
+            {
+                str = str.Remove(str.IndexOf(find), find.Length);
+                j++;
+            }
+            return j;
+        }
+        private void tabPage4_Click(object sender, EventArgs e)
+        {
+            
+        }
+        private void button2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Bitmap bmp = new Bitmap(global::ELE.Properties.Resources.红前_01);
+                Graphics g = Graphics.FromImage(bmp);
+                String astn = tbx_tka.Text.Split('|')[0];
+                int al = astn.Length;
+                String bstn = tbx_tkb.Text.Split('|')[0];
+                int bl = bstn.Length;
+                float f = 491.7729f;
+                if (astn.Length == 2)
+                {
+                    astn = astn.Insert(1, "    ");
+                    al = 3;
+                }
+                if (bstn.Length == 2)
+                {
+                    bstn = bstn.Insert(1, "    ");
+                    bl = 3;
+                }
+                //御坂|Misaka Mikoto
+                //贴白|Tiebai
+                //韧穿普|Wren Trumpull
+                //咸淑娜|Xian Shuna
+                //香港西九龙|Hongkongwestkowloon
+                //忽任|Head of the Strategic Misinfomation Office (h)
+                //北京城市副中心|Beijingchengshifuzhongxin
+                //卡特洛斯|Kateluos
+                g.DrawString(cbo_tkn.Items[cbo_tkn.SelectedIndex].ToString() + tbx_tkn.Text.Substring(3), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), 
+                    new SolidBrush(Color.FromArgb(0xf9, 0x2f, 0x10)), 205.5277f - (209.4209f / 2), 112.6888f - (59.4258f / 2));
+                g.DrawString(cbo_tkt.Items[cbo_tkt.SelectedIndex].ToString() + tbx_tkt.Text.Substring(3), new Font("宋体", 55 * 0.75f, FontStyle.Regular), 
+                    new SolidBrush(Color.FromArgb(0, 0, 0)), 529.536f - (151.25f / 2 * 0) - ((cbo_tkt.Items[cbo_tkt.SelectedIndex].ToString() + tbx_tkt.Text.Substring(3)).Length / 4.0f * 55f*0.75f), 171.1038f - 30.25f);
+                g.DrawString(astn, new Font("微软雅黑", 55 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 774.6464f + (181.5f / 1) - (46.2002f * 1.5f) - (al * 55f) - 10f, 168.2542f - (60.5f / 2) - 20);
+                if (tbx_tka.Text.Contains("|"))
+                {
+                    if ((tbx_tka.Text.Split('|')[1].Length * 18) >= (al * 55)) //英语比中文长
+                        g.DrawString(tbx_tka.Text.Split('|')[1], new Font("宋体", 36 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 774.6464f + (181.5f / 1) - (46.2002f * 1.5f) - (al * 55f) - 10f, 215.1326f - (39.6006f / 2) - 10f);
+                    else //英语比中文短
+                        g.DrawString(tbx_tka.Text.Split('|')[1], new Font("宋体", 36 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 774.6464f + (181.5f / 1) - (46.2002f * 1.5f) - 10f - (tbx_tka.Text.Split('|')[1].Length * 18f), 215.1326f - (39.6006f / 2) - 10f);
+                }
+                g.DrawString("站", new Font("宋体", 42 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 774.6464f + (181.5f / 1) - (46.2002f * 1.5f), 167.9109f - (46.2002f / 2));
+
+                g.DrawString(bstn, new Font("微软雅黑", 55 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 345.7445f - (46.2002f / 2) - (bl*55f), 168.2542f - (60.5f / 2) - 20);
+                if (tbx_tka.Text.Contains("|"))
+                {
+                    g.DrawString(tbx_tkb.Text.Split('|')[1], new Font("宋体", 36 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 345.7445f - (46.2002f / 2) - (tbx_tkb.Text.Split('|')[1].Length * 18f), 215.1326f - (39.6006f / 2) - 10f);
+                }
+                g.DrawString("站", new Font("宋体", 42 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 345.7445f - (46.2002f / 2), 167.9109f - (46.2002f / 2));
+
+                g.DrawString(tbx_tm.Text.Substring(3, 4), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 
+                    126.1459f - (111.6074f / 2) - 10f + (Count(tbx_tm.Text.Substring(3, 4), "1") * 10f), 265.1282f - (59.4258f / 2) + 5f);
+                g.DrawString(tbx_tm.Text.Substring(8, 2), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    244.4638f - (56.2285f / 2) - 10f, 265.1282f - (59.4258f / 2) + 5f);
+                g.DrawString(tbx_tm.Text.Substring(11, 2), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    338.2602f - (44.1377f / 2) - 15f, 265.1282f - (59.4258f / 2) + 5f);
+                g.DrawString(tbx_tm.Text.Substring(14, 2), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    434.6693f - (44.6533f / 2) - 13f + (Count(tbx_tm.Text.Substring(14, 2), "1") * 8f), 265.1282f - (59.4258f / 2) + 5f);
+                g.DrawString(tbx_tm.Text.Substring(17, 2), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    500.1137f - (55.1973f / 2) - 10f, 265.1282f - (59.4258f / 2) + 5f);
+
+                g.DrawString(tbx_tkc.Text, new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    675.7763f - (56.7959f / 2) - 10f + (Count(tbx_tkc.Text, "1") * 10f), 265.1282f - (59.4258f / 2) + 5f);
+                g.DrawString(tbx_tks.Text, new Font("宋体", 48 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    781.6835f - (79.2002f / 2) - 15f, 265.1282f - (59.4258f / 2));
+
+                g.DrawString(tbx_tkp.Text.Split('|')[0], new Font("Noto Serif SC", 36 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    96.3871f - (30.334f / 2), 319.9993f - (69.4805f / 2));
+                g.DrawString(tbx_tkp.Text.Split('|')[1], new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    165.8598f - (95.7256f / 2) + (tbx_tkp.Text.Split('|')[0].Length * 18f) - 15f, 316.7962f - (54.0234f / 2));
+                g.DrawString(tbx_tkp.Text.Split('|')[2], new Font("宋体", 24 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    165.8598f - (95.7256f / 2) + (tbx_tkp.Text.Split('|')[0].Length * 18f) - 15f + ((tbx_tkp.Text.Split('|')[1].Length) * 24f), 314.8333f - (26.2002f / 2));
+
+                g.DrawString(tbx_tst.Text, new Font("宋体", 42 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 823.6229f - (tbx_tst.Text.Length * 21f), 315.7581f - 20);
+
+                if (cbx_dis.Checked) {
+                    g.DrawString(tbx_tki.Text.Substring(0,10), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 189.7577f - (240.2109f / 2), 466.2356f - (54.0234f / 2));
+                    g.DrawString("****", new Font("Bahnschrift", 48 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 356.7472f - (90.48f / 2) - (Count(tbx_tki.Text.Substring(0, 10), "1") * 6f) + 5f, 466.2356f - (54.0234f / 2));
+                    g.DrawString(tbx_tki.Text.Substring(14, 4), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 457.7636f - (84.0234f / 2) - 24f - (Count(tbx_tki.Text.Substring(0, 10), "1") * 6f) + 5f, 466.2356f - (54.0234f / 2));
+                    g.DrawString(" " + tbx_tki.Text.Substring(18), new Font("宋体", 48 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 457.7636f + (84.0234f / 2) - 42f, 466.2356f - (54.0234f / 2));
+                }
+                else
+                {
+                    g.DrawString(tbx_tki.Text.Substring(0, 18), new Font("Bahnschrift", 48 * 0.75f, FontStyle.Regular), new SolidBrush(Color.FromArgb(0, 0, 0)), 189.7577f - (240.2109f / 2), 466.2356f - (54.0234f / 2));
+                    g.DrawString(" " + tbx_tki.Text.Substring(18), new Font("宋体", 42 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 189.7577f - (240.2109f / 2) + (18f * 24f) - (Count(tbx_tki.Text.Substring(0, 18), "1") * 6f) + 5f, 466.2356f - (54.0234f / 2));
+                }
+
+                g.DrawString(tbx_tkm.Text.Substring(9) + cbo_tkn.Items[cbo_tkn.SelectedIndex].ToString() + tbx_tkn.Text.Substring(3), new Font("Bernard MT Condensed", 36 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)), 261.8358f - (361.2305f / 2), 616.718f - (44.3359f / 2));
+
+                g.DrawString(tbx_tel.Text.Replace('：', ':'), new Font("宋体", 40 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                    804.5585f + (352f / 2) - (tbx_tel.Text.Length * 40f), 112.6888f - 30f);
+
+                //491.7729
+
+                if(tbx_tmk.Text.Length == 1)
+                {
+                    g.DrawString(tbx_tmk.Text, new Font("华文中宋", 30 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                        463.6884f - (33f / 2f), 316.7029f - (33.54f / 2f) - 3f);
+                    g.DrawEllipse(new Pen(Color.FromArgb(0, 0, 0), 3), 463.2284f - ((float)Math.Sqrt(1800) / 2f) + 4f, 314.0786f - (42.4264f / 2f), (float)Math.Sqrt(1800) * 1f, (float)Math.Sqrt(1800) * 1f);
+                }
+                else if (tbx_tmk.Text.Length > 1)
+                {
+                    f -= tbx_tmk.Text.Length / 2.0f * ((float)Math.Sqrt(1800));
+                    f -= (tbx_tmk.Text.Length - 1.0f) / 2.0f * 15.0f;
+                    for(int i = 0; i < tbx_tmk.Text.Length; i++)
+                    {
+                        //463.6884(字)-463.2284(圆)
+                        //
+                        g.DrawEllipse(new Pen(Color.FromArgb(0, 0, 0), 3), f, 314.0786f - (42.4264f / 2f), (float)Math.Sqrt(1800) * 1f, (float)Math.Sqrt(1800) * 1f);
+                        g.DrawString(tbx_tmk.Text[i].ToString(), new Font("华文中宋", 30 * 0.75f, FontStyle.Bold), new SolidBrush(Color.FromArgb(0, 0, 0)),
+                        f + 463.6884f - 463.2284f, 316.7029f - (33.54f / 2f) - 3f);
+                        f += 15f;
+                        f += (float)Math.Sqrt(1800);
+                    }
+                }
+
+                pbx_ticket.Image = bmp;
+            }
+            catch
+            {
+                MessageBox.Show("报销凭证生成失败", "错误", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+            }
+        }
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if(tabControl1.SelectedIndex == 2)
+                MessageBox.Show("该功能仅供娱乐，禁止用于其它用途", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+        private void button3_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                SaveFileDialog sfd = new SaveFileDialog();
+                sfd.Filter = "PNG文件(*.png)|*.png|位图文件(*.bmp)|*.bmp";
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    new Bitmap(pbx_ticket.Image).Save(sfd.FileName);
+                    MessageBox.Show("保存成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch
+            {
+                MessageBox.Show("保存失败", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
         private void mtb_downtime_TextChanged(object sender, EventArgs e)
         {
             if (mtb_downtime.Text.Replace(":", "").Length == 4)
@@ -3769,369 +4322,376 @@ namespace ELE
         }
         public List<ListItem> AStar(int start, int end, int bstop, int astop, int delay, RunMode rm, bool bteg, bool ateg)
         {
-            List<List<DFSItem>> dfsis = new List<List<DFSItem>>();
-            List<ListItem> liss = new List<ListItem>();
-            List<ListItem> r = new List<ListItem>();
-            double lat, lng = lat = -1;
-            //bool[,,] fake = new bool[Share.stations.Count, Share.rails.Count, Share.stations.Count];
-            List<int[]> visit = new List<int[]>();
-            int tmp1 = -1;
-            int tmp2 = -1;
-            int tmp3 = -1;
-            int num = 0;
-            List<int> sns = new List<int>();
-            List<double> pos = new List<double>();
-            List<int> lin = new List<int>();
-            List<int> lin2 = new List<int>();
-            bool b = false;
-            bool bIsSmall = false;
-            bool b1 = false;
-            bool b2 = false;
-            bool isstovf = false;
-            tmp1 = -1;
-            tmp2 = -1;
-            double sortmp1 = -1;
-            int sortmp2 = -1;
-            bool zc;
-            int i;
-            int j;
-            int k;
-            List<DFSItem> it = new List<DFSItem>();
-            foreach (Rail item in Share.rails)
+            try
             {
-                foreach (JToken i2 in item.locations)
+                List<List<DFSItem>> dfsis = new List<List<DFSItem>>();
+                List<ListItem> liss = new List<ListItem>();
+                List<ListItem> r = new List<ListItem>();
+                double lat, lng = lat = -1;
+                //bool[,,] fake = new bool[Share.stations.Count, Share.rails.Count, Share.stations.Count];
+                List<int[]> visit = new List<int[]>();
+                int tmp1 = -1;
+                int tmp2 = -1;
+                int tmp3 = -1;
+                int num = 0;
+                List<int> sns = new List<int>();
+                List<double> pos = new List<double>();
+                List<int> lin = new List<int>();
+                List<int> lin2 = new List<int>();
+                bool b = false;
+                bool bIsSmall = false;
+                bool b1 = false;
+                bool b2 = false;
+                bool isstovf = false;
+                tmp1 = -1;
+                tmp2 = -1;
+                double sortmp1 = -1;
+                int sortmp2 = -1;
+                bool zc;
+                int i;
+                int j;
+                int k;
+                List<DFSItem> it = new List<DFSItem>();
+                foreach (Rail item in Share.rails)
                 {
-                    if ((!((string)i2["name"]).ToLower().StartsWith("x")) && (((string)i2["type"]) == "station"))
+                    foreach (JToken i2 in item.locations)
                     {
-                        if (((string)i2["name"]).ToLower() == Share.stations[end].name)
+                        if ((!((string)i2["name"]).ToLower().StartsWith("x")) && (((string)i2["type"]) == "station"))
                         {
-                            lat = (double)i2["lat"];
-                            lng = (double)i2["lng"];
-                            break;
-                        }
-                    }
-                }
-                if (lng != -1)
-                    break;
-            }
-            void astar(int st, int nd, int th)
-            {
-                try
-                {
-                    it.Add(new DFSItem(st, -1));
-                    num++;
-                    if (num > 399)
-                        return;
-                    if (st == nd)
-                    {
-                        dfsis.Add(it);
-                    }
-                    else
-                    {
-                        sns = new List<int>();
-                        pos = new List<double>();
-                        lin = new List<int>();
-                        lin2 = new List<int>();
-                        b = false;
-                        bIsSmall = false;
-                        b1 = false;
-                        b2 = false;
-                        tmp1 = -1;
-                        tmp2 = -1;
-                        sortmp1 = -1;
-                        sortmp2 = -1;
-                        for (i = 0; i < ssns.Count; i++)
-                        {
-                            if (ssns[i] == it[it.Count - 1].before)
+                            if (((string)i2["name"]).ToLower() == Share.stations[end].name)
                             {
-                                bIsSmall = true;
-                                zc = false;
-                                for (j = 0; j < sss[i].Count; j++)
-                                {
-                                    for (k = 0; k < sss[i][j].Count; k++)
-                                    {
-                                        if ((it.Count < 2) && (lis.Count == 0))
-                                        {
-                                            b1 = true;
-                                            break;
-                                        }
-                                        else if ((it.Count > 2) && (zc == false))
-                                        {
-                                            if ((sss[i][j][k] == it[it.Count - 2].line))
-                                            {
-                                                zc = true;
-                                                b = true;
-                                                k = 0;
-                                            }
-                                        }
-                                        else if ((zc == false) && (it.Count < 2))
-                                        {
-                                            if (sss[i][j][k] == lis[(lis.Count - 1)].line)
-                                            {
-                                                zc = true;
-                                                b = true;
-                                                k = 0;
-                                            }
-                                        }
-                                        if (zc)
-                                            sns.Add(sss[i][j][k]);
-                                    }
-                                    if (b1)
-                                        break;
-                                    zc = false;
-                                }
+                                lat = (double)i2["lat"];
+                                lng = (double)i2["lng"];
                                 break;
                             }
                         }
-                        if (bIsSmall == false)
-                            sns = Share.stations[it[it.Count - 1].before].rails;
-                        foreach (int item in sns)
+                    }
+                    if (lng != -1)
+                        break;
+                }
+                void astar(int st, int nd, int th)
+                {
+                    try
+                    {
+                        it.Add(new DFSItem(st, -1));
+                        num++;
+                        if (num > 399)
+                            return;
+                        if (st == nd)
                         {
-                            tmp1 = -1;
-                            for (i = 0; i < Share.rails[item].stations.Count; i++)
-                            {
-                                if (Share.rails[item].stations[i] == Share.stations[st].name)
-                                {
-                                    tmp1 = i;
-                                    break;
-                                }
-                            }
-                            if (tmp1 > 0)
-                            {
-                                for (i = 0; i < Share.rails[item].locations.Count; i++)
-                                {
-                                    if (((String)(Share.rails[item].locations[i]["name"])) == (Share.rails[item].stations[tmp1 - 1]))
-                                    {
-                                        pos.Add(GetLength(lng, lat, ((double)(Share.rails[item].locations[i]["lng"])), ((double)(Share.rails[item].locations[i]["lat"]))));
-                                        lin2.Add(item);
-                                        for (j = 0; j < Share.stations.Count; j++)
-                                        {
-                                            for (tmp2 = 1; tmp2 < Share.rails[item].stations.Count; tmp2++)
-                                            {
-                                                //GC.Collect();
-                                                if (!Share.rails[item].stations[tmp1 - tmp2].ToLower().StartsWith("x"))
-                                                    break;
-                                            }
-                                            if (Share.stations[j].name == Share.rails[item].stations[tmp1 - tmp2])
-                                            {
-                                                lin.Add(j);
-                                                break;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            if (tmp1 + 1 < Share.rails[item].stations.Count)
-                            {
-                                for (i = 0; i < Share.rails[item].locations.Count; i++)
-                                {
-                                    if (((String)(Share.rails[item].locations[i]["name"])) == (Share.rails[item].stations[tmp1 + 1]))
-                                    {
-                                        pos.Add(GetLength(lng, lat, ((double)(Share.rails[item].locations[i]["lng"])), ((double)(Share.rails[item].locations[i]["lat"]))));
-                                        lin2.Add(item);
-                                        for (j = 0; j < Share.stations.Count; j++)
-                                        {
-                                            for (tmp2 = 1; tmp2 < Share.rails[item].stations.Count; tmp2++)
-                                            {
-                                                //GC.Collect();
-                                                if (!Share.rails[item].stations[tmp1 + tmp2].ToLower().StartsWith("x"))
-                                                    break;
-                                            }
-                                            if (Share.stations[j].name == Share.rails[item].stations[tmp1 + tmp2])
-                                            {
-                                                lin.Add(j);
-                                                break;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        for (i = 0; i < pos.Count - 1; i++)
-                        {
-                            for (j = 0; j < pos.Count - 1 - i; j++)
-                            {
-                                if (pos[j] > pos[j + 1])
-                                {
-                                    sortmp1 = pos[j];
-                                    pos[j] = pos[j + 1];
-                                    pos[j + 1] = sortmp1;
-                                    sortmp2 = lin[j];
-                                    lin[j] = lin[j + 1];
-                                    lin[j + 1] = sortmp2;
-                                    sortmp2 = lin2[j];
-                                    lin2[j] = lin2[j + 1];
-                                    lin2[j + 1] = sortmp2;
-                                }
-                            }
-                        }
-                        if (lin.Count == 0)
-                        {
-                            it.RemoveAt(it.Count - 1);
-                            astar(it[it.Count - 1].before, nd, th);
-                            if (num > Share.stations.Count * 2)
-                                return;
-                            if (num > 400)
-                                return;
-                        }
-                        else if (th - 1 < pos.Count)
-                        {
-                            it[it.Count - 1].line = lin2[th - 1];
-                            //string str = Share.stations[lin[th - 1]].name;
-                            foreach (int[] item in visit)
-                            {
-                                if (((item[0] == st) && (item[1] == lin2[lin2.Count - 1]) && (item[2] == lin[th - 1])) ||
-                                    ((item[2] == st) && (item[1] == lin2[lin2.Count - 1]) && (item[0] == lin[th - 1])))
-                                {
-                                    for (i = 1; i < pos.Count; i++)
-                                    {
-                                        if (th - 1 + i < pos.Count)
-                                        {
-                                            b2 = false;
-                                            foreach (int[] item2 in visit)
-                                            {
-                                                b2 = b2 || (((item2[0] == st) && (item2[1] == lin2[lin2.Count - 1]) && (item2[2] == lin[th - 1 + i])) ||
-                                                    ((item2[2] == st) && (item2[1] == lin2[lin2.Count - 1]) && (item2[0] == lin[th - 1 + i])));
-                                            }
-                                            if (!b2)
-                                            {
-                                                it[it.Count - 1].line = lin2[th - 1 + i];
-                                                visit.Add(new int[3] { st, lin2[th - 1 + i], lin[th - 1 + i] });
-                                                //visit[st, lin2[th - 1 + i], lin[th - 1 + i]] = true;
-                                                //visit[lin[th - 1 + i], lin2[th - 1 + i], st] = true;
-                                                //GC.Collect();
-                                                astar(lin[th - 1 + i], nd, th);
-                                                return;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            it.RemoveAt(it.Count - 1);
-                                            //GC.Collect();
-                                            astar(it[it.Count - 1].before, nd, th);
-                                            return;
-                                        }
-                                    }
-                                }
-                            }
-                            visit.Add(new int[3] { st, lin2[th - 1], lin[th - 1] });
-                            //visit[lin[th - 1], lin2[th - 1], st] = true;
-                            astar(lin[th - 1], nd, th);
-                            if (num > Share.stations.Count * 2)
-                                return;
-                            if (num > 400)
-                                return;
+                            dfsis.Add(it);
                         }
                         else
                         {
-                            it[it.Count - 1].line = lin2[lin2.Count - 1];
-                            //string str = Share.stations[lin[lin.Count - 1]].name;
-                            //|| visit[lin[lin.Count - 1], lin2[lin2.Count - 1], st]
-                            foreach (int[] item in visit)
+                            sns = new List<int>();
+                            pos = new List<double>();
+                            lin = new List<int>();
+                            lin2 = new List<int>();
+                            b = false;
+                            bIsSmall = false;
+                            b1 = false;
+                            b2 = false;
+                            tmp1 = -1;
+                            tmp2 = -1;
+                            sortmp1 = -1;
+                            sortmp2 = -1;
+                            for (i = 0; i < ssns.Count; i++)
                             {
-                                if (((item[0] == st) && (item[1] == lin2[lin2.Count - 1]) && (item[2] == lin[lin.Count - 1])) ||
-                                    ((item[2] == st) && (item[1] == lin2[lin2.Count - 1]) && (item[0] == lin[lin.Count - 1])))
+                                if (ssns[i] == it[it.Count - 1].before)
                                 {
-                                    it.RemoveAt(it.Count - 1);
-                                    astar(it[it.Count - 1].before, nd, th);
-                                    return;
+                                    bIsSmall = true;
+                                    zc = false;
+                                    for (j = 0; j < sss[i].Count; j++)
+                                    {
+                                        for (k = 0; k < sss[i][j].Count; k++)
+                                        {
+                                            if ((it.Count < 2) && (lis.Count == 0))
+                                            {
+                                                b1 = true;
+                                                break;
+                                            }
+                                            else if ((it.Count > 2) && (zc == false))
+                                            {
+                                                if ((sss[i][j][k] == it[it.Count - 2].line))
+                                                {
+                                                    zc = true;
+                                                    b = true;
+                                                    k = 0;
+                                                }
+                                            }
+                                            else if ((zc == false) && (it.Count < 2))
+                                            {
+                                                if (sss[i][j][k] == lis[(lis.Count - 1)].line)
+                                                {
+                                                    zc = true;
+                                                    b = true;
+                                                    k = 0;
+                                                }
+                                            }
+                                            if (zc)
+                                                sns.Add(sss[i][j][k]);
+                                        }
+                                        if (b1)
+                                            break;
+                                        zc = false;
+                                    }
+                                    break;
                                 }
                             }
-                            visit.Add(new int[3] { st, lin2[lin2.Count - 1], lin[lin.Count - 1] });
-                            //visit[lin[lin.Count - 1], lin2[lin2.Count - 1], st] = true;
-                            astar(lin[lin.Count - 1], nd, th);
-                            if (num > Share.stations.Count * 2)
-                                return;
-                            if (num > 400)
-                                return;
+                            if (bIsSmall == false)
+                                sns = Share.stations[it[it.Count - 1].before].rails;
+                            foreach (int item in sns)
+                            {
+                                tmp1 = -1;
+                                for (i = 0; i < Share.rails[item].stations.Count; i++)
+                                {
+                                    if (Share.rails[item].stations[i] == Share.stations[st].name)
+                                    {
+                                        tmp1 = i;
+                                        break;
+                                    }
+                                }
+                                if (tmp1 > 0)
+                                {
+                                    for (i = 0; i < Share.rails[item].locations.Count; i++)
+                                    {
+                                        if (((String)(Share.rails[item].locations[i]["name"])) == (Share.rails[item].stations[tmp1 - 1]))
+                                        {
+                                            pos.Add(GetLength(lng, lat, ((double)(Share.rails[item].locations[i]["lng"])), ((double)(Share.rails[item].locations[i]["lat"]))));
+                                            lin2.Add(item);
+                                            for (j = 0; j < Share.stations.Count; j++)
+                                            {
+                                                for (tmp2 = 1; tmp2 < Share.rails[item].stations.Count; tmp2++)
+                                                {
+                                                    //GC.Collect();
+                                                    if (!Share.rails[item].stations[tmp1 - tmp2].ToLower().StartsWith("x"))
+                                                        break;
+                                                }
+                                                if (Share.stations[j].name == Share.rails[item].stations[tmp1 - tmp2])
+                                                {
+                                                    lin.Add(j);
+                                                    break;
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (tmp1 + 1 < Share.rails[item].stations.Count)
+                                {
+                                    for (i = 0; i < Share.rails[item].locations.Count; i++)
+                                    {
+                                        if (((String)(Share.rails[item].locations[i]["name"])) == (Share.rails[item].stations[tmp1 + 1]))
+                                        {
+                                            pos.Add(GetLength(lng, lat, ((double)(Share.rails[item].locations[i]["lng"])), ((double)(Share.rails[item].locations[i]["lat"]))));
+                                            lin2.Add(item);
+                                            for (j = 0; j < Share.stations.Count; j++)
+                                            {
+                                                for (tmp2 = 1; tmp2 < Share.rails[item].stations.Count; tmp2++)
+                                                {
+                                                    //GC.Collect();
+                                                    if (!Share.rails[item].stations[tmp1 + tmp2].ToLower().StartsWith("x"))
+                                                        break;
+                                                }
+                                                if (Share.stations[j].name == Share.rails[item].stations[tmp1 + tmp2])
+                                                {
+                                                    lin.Add(j);
+                                                    break;
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            for (i = 0; i < pos.Count - 1; i++)
+                            {
+                                for (j = 0; j < pos.Count - 1 - i; j++)
+                                {
+                                    if (pos[j] > pos[j + 1])
+                                    {
+                                        sortmp1 = pos[j];
+                                        pos[j] = pos[j + 1];
+                                        pos[j + 1] = sortmp1;
+                                        sortmp2 = lin[j];
+                                        lin[j] = lin[j + 1];
+                                        lin[j + 1] = sortmp2;
+                                        sortmp2 = lin2[j];
+                                        lin2[j] = lin2[j + 1];
+                                        lin2[j + 1] = sortmp2;
+                                    }
+                                }
+                            }
+                            if (lin.Count == 0)
+                            {
+                                it.RemoveAt(it.Count - 1);
+                                astar(it[it.Count - 1].before, nd, th);
+                                if (num > Share.stations.Count * 2)
+                                    return;
+                                if (num > 400)
+                                    return;
+                            }
+                            else if (th - 1 < pos.Count)
+                            {
+                                it[it.Count - 1].line = lin2[th - 1];
+                                //string str = Share.stations[lin[th - 1]].name;
+                                foreach (int[] item in visit)
+                                {
+                                    if (((item[0] == st) && (item[1] == lin2[lin2.Count - 1]) && (item[2] == lin[th - 1])) ||
+                                        ((item[2] == st) && (item[1] == lin2[lin2.Count - 1]) && (item[0] == lin[th - 1])))
+                                    {
+                                        for (i = 1; i < pos.Count; i++)
+                                        {
+                                            if (th - 1 + i < pos.Count)
+                                            {
+                                                b2 = false;
+                                                foreach (int[] item2 in visit)
+                                                {
+                                                    b2 = b2 || (((item2[0] == st) && (item2[1] == lin2[lin2.Count - 1]) && (item2[2] == lin[th - 1 + i])) ||
+                                                        ((item2[2] == st) && (item2[1] == lin2[lin2.Count - 1]) && (item2[0] == lin[th - 1 + i])));
+                                                }
+                                                if (!b2)
+                                                {
+                                                    it[it.Count - 1].line = lin2[th - 1 + i];
+                                                    visit.Add(new int[3] { st, lin2[th - 1 + i], lin[th - 1 + i] });
+                                                    //visit[st, lin2[th - 1 + i], lin[th - 1 + i]] = true;
+                                                    //visit[lin[th - 1 + i], lin2[th - 1 + i], st] = true;
+                                                    //GC.Collect();
+                                                    astar(lin[th - 1 + i], nd, th);
+                                                    return;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                it.RemoveAt(it.Count - 1);
+                                                //GC.Collect();
+                                                astar(it[it.Count - 1].before, nd, th);
+                                                return;
+                                            }
+                                        }
+                                    }
+                                }
+                                visit.Add(new int[3] { st, lin2[th - 1], lin[th - 1] });
+                                //visit[lin[th - 1], lin2[th - 1], st] = true;
+                                astar(lin[th - 1], nd, th);
+                                if (num > Share.stations.Count * 2)
+                                    return;
+                                if (num > 400)
+                                    return;
+                            }
+                            else
+                            {
+                                it[it.Count - 1].line = lin2[lin2.Count - 1];
+                                //string str = Share.stations[lin[lin.Count - 1]].name;
+                                //|| visit[lin[lin.Count - 1], lin2[lin2.Count - 1], st]
+                                foreach (int[] item in visit)
+                                {
+                                    if (((item[0] == st) && (item[1] == lin2[lin2.Count - 1]) && (item[2] == lin[lin.Count - 1])) ||
+                                        ((item[2] == st) && (item[1] == lin2[lin2.Count - 1]) && (item[0] == lin[lin.Count - 1])))
+                                    {
+                                        it.RemoveAt(it.Count - 1);
+                                        astar(it[it.Count - 1].before, nd, th);
+                                        return;
+                                    }
+                                }
+                                visit.Add(new int[3] { st, lin2[lin2.Count - 1], lin[lin.Count - 1] });
+                                //visit[lin[lin.Count - 1], lin2[lin2.Count - 1], st] = true;
+                                astar(lin[lin.Count - 1], nd, th);
+                                if (num > Share.stations.Count * 2)
+                                    return;
+                                if (num > 400)
+                                    return;
+                            }
                         }
                     }
+                    catch (StackOverflowException ex)
+                    {
+                        num = Share.stations.Count * 3;
+                        isstovf = true;
+                        return;
+                    }
                 }
-                catch (StackOverflowException ex)
+                //GC.Collect();
+                /*for (int i = 0; i < Share.stations.Count; i++)
+                    for (int j = 0; j < Share.rails.Count; j++)
+                        for (int k = 0; k < Share.stations.Count; k++)
+                            visit[i, j, k] = true;
+                for (int i = 0; i < Share.stations.Count; i++)
+                    for (int j = 0; j < Share.rails.Count; j++)
+                        for (int k = 0; k < Share.stations.Count; k++)
+                            visit[i, j, k] = false;*/
+                astar(start, end, 1);
+                GC.Collect();
+                if (num > 350)
                 {
-                    num = Share.stations.Count * 3;
-                    isstovf = true;
-                    return;
+                    MessageBox.Show("路径过于复杂！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    return new List<ListItem>();
                 }
+                tmp1 = -1;
+                tmp2 = -1;
+                tmp3 = -1;
+                for (i = 0; i < dfsis[0].Count; i++)
+                {
+                    if (dfsis[0][i].line == tmp2)
+                        liss[liss.Count - 1].after = dfsis[0][i].before;
+                    else if (i > 0)
+                    {
+                        if (dfsis[0][i - 1].line == tmp2)
+                            liss[liss.Count - 1].after = dfsis[0][i].before;
+                    }
+                    if ((dfsis[0][i].line > -1) && (dfsis[0][i].line != tmp2))
+                        liss.Add(new ListItem(dfsis[0][i].before, 0, dfsis[0][i].line, rm, dfsis[0][i + 1].before, 0, 0, false, false));
+                    tmp2 = dfsis[0][i].line;
+                }
+                /*for (int i = 0; i < liss.Count; i++)
+                {
+                    if (tmp1 == -1)
+                    {
+                        tmp1 = liss[i].before;
+                        tmp2 = liss[i].line;
+                    }
+                    if (liss[i].line == tmp2)
+                    {
+                        tmp3 = liss[i].after;
+                    }
+                    else
+                    {
+                        r.Add(new ListItem(tmp1, 0, tmp2, rm, tmp3, 0, 0, false, false));
+                        tmp1 = -1;
+                        tmp2 = -1; 
+                    }
+                    if((liss[i].line == tmp2) && (i + 1 >= liss.Count))
+                        r.Add(new ListItem(tmp1, 0, tmp2, rm, tmp3, 0, delay, false, ateg));
+                    else if(i + 1 >= liss.Count)
+                        r.Add(new ListItem(liss[i].before, 0, liss[i].line, rm, liss[i].after, 0, delay, false, ateg));
+                    if (tmp1 == -1)
+                    {
+                        tmp1 = liss[i].before;
+                        tmp2 = liss[i].line;
+                    }
+                }*/
+                r = liss;
+                //r.Add(new ListItem(tmp1, 0, tmp2, rm, tmp3, 0, delay, false, ateg));
+                r[0].beforestop = bstop;
+                r[0].beforeteg = bteg;
+                r[r.Count - 1].afterstop = astop;
+                r[r.Count - 1].earlytime = delay;
+                r[r.Count - 1].afterteg = ateg;
+                for (i = 0; i < r.Count; i++)
+                {
+                    if (r[i].before == r[i].after)
+                    {
+                        r[i + 1].beforestop = r[i].beforestop;
+                        r.RemoveAt(i);
+                        i = 0;
+                    }
+                }
+                return r;
             }
-            //GC.Collect();
-            /*for (int i = 0; i < Share.stations.Count; i++)
-                for (int j = 0; j < Share.rails.Count; j++)
-                    for (int k = 0; k < Share.stations.Count; k++)
-                        visit[i, j, k] = true;
-            for (int i = 0; i < Share.stations.Count; i++)
-                for (int j = 0; j < Share.rails.Count; j++)
-                    for (int k = 0; k < Share.stations.Count; k++)
-                        visit[i, j, k] = false;*/
-            astar(start, end, 1);
-            GC.Collect();
-            if (num > 350)
+            catch
             {
-                MessageBox.Show("路径过于复杂！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return new List<ListItem>();
             }
-            tmp1 = -1;
-            tmp2 = -1;
-            tmp3 = -1;
-            for (i = 0; i < dfsis[0].Count; i++)
-            {
-                if (dfsis[0][i].line == tmp2)
-                    liss[liss.Count - 1].after = dfsis[0][i].before;
-                else if (i > 0)
-                {
-                    if (dfsis[0][i - 1].line == tmp2)
-                        liss[liss.Count - 1].after = dfsis[0][i].before;
-                }
-                if ((dfsis[0][i].line > -1) && (dfsis[0][i].line != tmp2))
-                    liss.Add(new ListItem(dfsis[0][i].before, 0, dfsis[0][i].line, rm, dfsis[0][i + 1].before, 0, 0, false, false));
-                tmp2 = dfsis[0][i].line;
-            }
-            /*for (int i = 0; i < liss.Count; i++)
-            {
-                if (tmp1 == -1)
-                {
-                    tmp1 = liss[i].before;
-                    tmp2 = liss[i].line;
-                }
-                if (liss[i].line == tmp2)
-                {
-                    tmp3 = liss[i].after;
-                }
-                else
-                {
-                    r.Add(new ListItem(tmp1, 0, tmp2, rm, tmp3, 0, 0, false, false));
-                    tmp1 = -1;
-                    tmp2 = -1; 
-                }
-                if((liss[i].line == tmp2) && (i + 1 >= liss.Count))
-                    r.Add(new ListItem(tmp1, 0, tmp2, rm, tmp3, 0, delay, false, ateg));
-                else if(i + 1 >= liss.Count)
-                    r.Add(new ListItem(liss[i].before, 0, liss[i].line, rm, liss[i].after, 0, delay, false, ateg));
-                if (tmp1 == -1)
-                {
-                    tmp1 = liss[i].before;
-                    tmp2 = liss[i].line;
-                }
-            }*/
-            r = liss;
-            //r.Add(new ListItem(tmp1, 0, tmp2, rm, tmp3, 0, delay, false, ateg));
-            r[0].beforestop = bstop;
-            r[0].beforeteg = bteg;
-            r[r.Count - 1].afterstop = astop;
-            r[r.Count - 1].earlytime = delay;
-            r[r.Count - 1].afterteg = ateg;
-            for (i = 0; i < r.Count; i++)
-            {
-                if (r[i].before == r[i].after)
-                {
-                    r[i + 1].beforestop = r[i].beforestop;
-                    r.RemoveAt(i);
-                    i = 0;
-                }
-            }
-            return r;
         }
     }
 }
